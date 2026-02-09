@@ -12,7 +12,10 @@ export function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
         <h1 className="text-2xl font-bold tracking-tight text-foreground text-balance">
           {title}
         </h1>
-        <p className="text-sm text-muted-foreground">{subtitle}</p>
+        <p
+          className="text-sm text-muted-foreground"
+          dangerouslySetInnerHTML={{ __html: subtitle }}
+        />
       </div>
       {actions && (
         <div className="flex items-center gap-2 mt-3 sm:mt-0">{actions}</div>
