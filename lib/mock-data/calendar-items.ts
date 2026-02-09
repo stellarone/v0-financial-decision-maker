@@ -5,7 +5,7 @@ export const mockCalendarItems: CalendarItem[] = [
   // Feb 3
   {
     id: "cal-1",
-    date: new Date("2026-02-03"),
+    date: new Date(2026, 1, 3),
     type: "inflow",
     category: "expected",
     entityName: "Acme Corp",
@@ -18,7 +18,7 @@ export const mockCalendarItems: CalendarItem[] = [
   // Feb 4
   {
     id: "cal-2",
-    date: new Date("2026-02-04"),
+    date: new Date(2026, 1, 4),
     type: "outflow",
     category: "scheduled",
     entityName: "Raw Materials Co",
@@ -26,13 +26,13 @@ export const mockCalendarItems: CalendarItem[] = [
     reference: "BILL-2026-0234",
     amount: 18200,
     isDraggable: true,
-    originalDueDate: new Date("2026-02-10"),
+    originalDueDate: new Date(2026, 1, 10),
     paymentMethod: "ACH",
   },
   // Feb 5
   {
     id: "cal-3",
-    date: new Date("2026-02-05"),
+    date: new Date(2026, 1, 5),
     type: "inflow",
     category: "expected",
     entityName: "Bright Solutions",
@@ -44,7 +44,7 @@ export const mockCalendarItems: CalendarItem[] = [
   },
   {
     id: "cal-4",
-    date: new Date("2026-02-05"),
+    date: new Date(2026, 1, 5),
     type: "outflow",
     category: "due",
     entityName: "City Utilities",
@@ -57,7 +57,7 @@ export const mockCalendarItems: CalendarItem[] = [
   // Feb 7
   {
     id: "cal-5",
-    date: new Date("2026-02-07"),
+    date: new Date(2026, 1, 7),
     type: "outflow",
     category: "scheduled",
     entityName: "Logistics Plus",
@@ -65,13 +65,13 @@ export const mockCalendarItems: CalendarItem[] = [
     reference: "BILL-2026-0251",
     amount: 12600,
     isDraggable: true,
-    originalDueDate: new Date("2026-02-14"),
+    originalDueDate: new Date(2026, 1, 14),
     paymentMethod: "ACH",
   },
   // Feb 9 (today)
   {
     id: "cal-6",
-    date: new Date("2026-02-09"),
+    date: new Date(2026, 1, 9),
     type: "inflow",
     category: "expected",
     entityName: "Metro Retail Group",
@@ -83,7 +83,7 @@ export const mockCalendarItems: CalendarItem[] = [
   },
   {
     id: "cal-7",
-    date: new Date("2026-02-09"),
+    date: new Date(2026, 1, 9),
     type: "outflow",
     category: "due",
     entityName: "Insurance Premium",
@@ -96,7 +96,7 @@ export const mockCalendarItems: CalendarItem[] = [
   // Feb 10
   {
     id: "cal-8",
-    date: new Date("2026-02-10"),
+    date: new Date(2026, 1, 10),
     type: "outflow",
     category: "scheduled",
     entityName: "Equipment Supplier",
@@ -104,13 +104,13 @@ export const mockCalendarItems: CalendarItem[] = [
     reference: "BILL-2026-0265",
     amount: 45000,
     isDraggable: true,
-    originalDueDate: new Date("2026-02-15"),
+    originalDueDate: new Date(2026, 1, 15),
     paymentMethod: "Wire",
   },
   // Feb 12
   {
     id: "cal-9",
-    date: new Date("2026-02-12"),
+    date: new Date(2026, 1, 12),
     type: "inflow",
     category: "expected",
     entityName: "Summit Enterprises",
@@ -122,7 +122,7 @@ export const mockCalendarItems: CalendarItem[] = [
   },
   {
     id: "cal-10",
-    date: new Date("2026-02-12"),
+    date: new Date(2026, 1, 12),
     type: "outflow",
     category: "due",
     entityName: "Kiln Services",
@@ -135,7 +135,7 @@ export const mockCalendarItems: CalendarItem[] = [
   // Feb 14
   {
     id: "cal-11",
-    date: new Date("2026-02-14"),
+    date: new Date(2026, 1, 14),
     type: "inflow",
     category: "expected",
     entityName: "Pacific Trading",
@@ -148,7 +148,7 @@ export const mockCalendarItems: CalendarItem[] = [
   // Feb 16
   {
     id: "cal-12",
-    date: new Date("2026-02-16"),
+    date: new Date(2026, 1, 16),
     type: "outflow",
     category: "scheduled",
     entityName: "Office Rent",
@@ -156,13 +156,13 @@ export const mockCalendarItems: CalendarItem[] = [
     reference: "BILL-2026-0280",
     amount: 8500,
     isDraggable: true,
-    originalDueDate: new Date("2026-02-20"),
+    originalDueDate: new Date(2026, 1, 20),
     paymentMethod: "ACH",
   },
   // Feb 18
   {
     id: "cal-13",
-    date: new Date("2026-02-18"),
+    date: new Date(2026, 1, 18),
     type: "inflow",
     category: "expected",
     entityName: "North Star Industries",
@@ -174,7 +174,7 @@ export const mockCalendarItems: CalendarItem[] = [
   },
   {
     id: "cal-14",
-    date: new Date("2026-02-18"),
+    date: new Date(2026, 1, 18),
     type: "outflow",
     category: "due",
     entityName: "Clay Supply Co",
@@ -187,7 +187,7 @@ export const mockCalendarItems: CalendarItem[] = [
   // Feb 20
   {
     id: "cal-15",
-    date: new Date("2026-02-20"),
+    date: new Date(2026, 1, 20),
     type: "inflow",
     category: "expected",
     entityName: "Greenfield Partners",
@@ -200,7 +200,7 @@ export const mockCalendarItems: CalendarItem[] = [
   // Feb 21
   {
     id: "cal-16",
-    date: new Date("2026-02-21"),
+    date: new Date(2026, 1, 21),
     type: "outflow",
     category: "scheduled",
     entityName: "Marketing Agency",
@@ -208,13 +208,13 @@ export const mockCalendarItems: CalendarItem[] = [
     reference: "BILL-2026-0290",
     amount: 6200,
     isDraggable: true,
-    originalDueDate: new Date("2026-02-25"),
+    originalDueDate: new Date(2026, 1, 25),
     paymentMethod: "Card",
   },
   // Feb 23
   {
     id: "cal-17",
-    date: new Date("2026-02-23"),
+    date: new Date(2026, 1, 23),
     type: "inflow",
     category: "expected",
     entityName: "Delta Corp",
@@ -227,7 +227,7 @@ export const mockCalendarItems: CalendarItem[] = [
   // Feb 24
   {
     id: "cal-18",
-    date: new Date("2026-02-24"),
+    date: new Date(2026, 1, 24),
     type: "outflow",
     category: "due",
     entityName: "Payroll",
@@ -240,7 +240,7 @@ export const mockCalendarItems: CalendarItem[] = [
   // Feb 25
   {
     id: "cal-19",
-    date: new Date("2026-02-25"),
+    date: new Date(2026, 1, 25),
     type: "outflow",
     category: "scheduled",
     entityName: "Cloud Hosting",
@@ -248,13 +248,13 @@ export const mockCalendarItems: CalendarItem[] = [
     reference: "BILL-2026-0300",
     amount: 3800,
     isDraggable: true,
-    originalDueDate: new Date("2026-02-28"),
+    originalDueDate: new Date(2026, 1, 28),
     paymentMethod: "Card",
   },
   // Feb 26
   {
     id: "cal-20",
-    date: new Date("2026-02-26"),
+    date: new Date(2026, 1, 26),
     type: "inflow",
     category: "expected",
     entityName: "Westside Distribution",
@@ -267,7 +267,7 @@ export const mockCalendarItems: CalendarItem[] = [
   // Feb 27
   {
     id: "cal-21",
-    date: new Date("2026-02-27"),
+    date: new Date(2026, 1, 27),
     type: "outflow",
     category: "scheduled",
     entityName: "New Vendor LLC",
@@ -275,13 +275,13 @@ export const mockCalendarItems: CalendarItem[] = [
     reference: "BILL-2026-0305",
     amount: 8200,
     isDraggable: true,
-    originalDueDate: new Date("2026-03-03"),
+    originalDueDate: new Date(2026, 2, 3),
     paymentMethod: "ACH",
   },
   // Feb 28
   {
     id: "cal-22",
-    date: new Date("2026-02-28"),
+    date: new Date(2026, 1, 28),
     type: "inflow",
     category: "expected",
     entityName: "TechForward Inc",
