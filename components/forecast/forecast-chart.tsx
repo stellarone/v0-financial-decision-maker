@@ -223,7 +223,7 @@ export function ForecastChart({
                 type="monotone"
                 dataKey="scenario"
                 name="What-If Scenario"
-                stroke="oklch(0.62 0.2 300)"
+                stroke="#00aeef"
                 strokeWidth={2}
                 strokeDasharray="6 4"
                 dot={false}

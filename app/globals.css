@@ -34,8 +34,8 @@
   --adz-red-dim: oklch(0.22 0.05 25);
   --adz-amber: oklch(0.75 0.15 75);
   --adz-amber-dim: oklch(0.25 0.05 75);
-  --adz-purple: oklch(0.62 0.2 300);
-  --adz-purple-dim: oklch(0.25 0.06 300);
+  --adz-purple: #00aeef;
+  --adz-purple-dim: oklch(0.25 0.06 220);
   --adz-cyan: oklch(0.72 0.14 200);
   --adz-cyan-dim: oklch(0.25 0.05 200);
   --adz-elevated: oklch(0.2 0.005 260);
@@ -45,7 +45,7 @@
   --chart-2: oklch(0.7 0.18 155);
   --chart-3: oklch(0.62 0.2 25);
   --chart-4: oklch(0.75 0.15 75);
-  --chart-5: oklch(0.62 0.2 300);
+  --chart-5: #00aeef;
 
   /* Sidebar */
   --sidebar: oklch(0.11 0.005 260);
