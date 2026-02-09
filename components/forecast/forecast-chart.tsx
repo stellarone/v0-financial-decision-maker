@@ -191,12 +191,12 @@ export function ForecastChart({
               <linearGradient id="balanceGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="oklch(0.62 0.18 250)"
+                  stopColor="#213964"
                   stopOpacity={0.3}
                 />
                 <stop
                   offset="95%"
-                  stopColor="oklch(0.62 0.18 250)"
+                  stopColor="#213964"
                   stopOpacity={0}
                 />
               </linearGradient>
@@ -205,13 +205,13 @@ export function ForecastChart({
               type="monotone"
               dataKey="balance"
               name="Cash Balance"
-              stroke="oklch(0.62 0.18 250)"
+              stroke="#213964"
               strokeWidth={2.5}
               fill="url(#balanceGradient)"
               dot={false}
               activeDot={{
                 r: 5,
-                fill: "oklch(0.62 0.18 250)",
+                fill: "#213964",
                 stroke: "oklch(0.16 0.005 260)",
                 strokeWidth: 2,
               }}

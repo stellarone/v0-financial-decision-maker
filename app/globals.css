@@ -26,8 +26,8 @@
   --radius: 0.5rem;
 
   /* Finance-specific color tokens */
-  --adz-blue: oklch(0.62 0.18 250);
-  --adz-blue-dim: oklch(0.25 0.06 250);
+  --adz-blue: #213964;
+  --adz-blue-dim: #111d34;
   --adz-green: oklch(0.7 0.18 155);
   --adz-green-dim: oklch(0.22 0.05 155);
   --adz-red: oklch(0.62 0.2 25);
@@ -41,7 +41,7 @@
   --adz-elevated: oklch(0.2 0.005 260);
 
   /* Chart colors */
-  --chart-1: oklch(0.62 0.18 250);
+  --chart-1: #213964;
   --chart-2: oklch(0.7 0.18 155);
   --chart-3: oklch(0.62 0.2 25);
   --chart-4: oklch(0.75 0.15 75);
