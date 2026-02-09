@@ -20,14 +20,20 @@ const iconColorMap = {
   risk: "text-adz-red",
 }
 
-const weeklyBreakdown = [
-  { week: "Week of Feb 2", inflows: 40300, outflows: 21650, net: 18650 },
-  { week: "Week of Feb 9", inflows: 99000, outflows: 57600, net: 41400 },
-  { week: "Week of Feb 16", inflows: 71200, outflows: 36800, net: 34400 },
-  { week: "Week of Feb 23", inflows: 114300, outflows: 98400, net: 15900 },
-]
+interface WeeklyRow {
+  week: string
+  inflows: number
+  outflows: number
+  net: number
+}
 
-export function InsightsPanel() {
+interface InsightsPanelProps {
+  weeklyBreakdown: WeeklyRow[]
+}
+
+export function InsightsPanel({ weeklyBreakdown }: InsightsPanelProps) {
+  const displayWeeks = weeklyBreakdown.slice(0, 8)
+
   return (
     <div className="rounded-lg border border-border bg-card p-5">
       <div className="mb-4 flex items-center gap-2">
@@ -73,11 +79,11 @@ export function InsightsPanel() {
       {/* Weekly Breakdown */}
       <div>
         <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Weekly Breakdown
+          Period Breakdown ({displayWeeks.length} weeks)
         </h4>
         <div className="flex flex-col gap-3">
-          {weeklyBreakdown.map((week) => {
-            const total = week.inflows + week.outflows
+          {displayWeeks.map((week) => {
+            const total = week.inflows + week.outflows || 1
             const inflowPct = (week.inflows / total) * 100
             return (
               <div key={week.week}>

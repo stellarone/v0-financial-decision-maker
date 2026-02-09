@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import {
   Landmark,
   ArrowDownLeft,
@@ -17,10 +17,22 @@ import { ForecastChart } from "@/components/forecast/forecast-chart"
 import { ScenarioSliders } from "@/components/forecast/scenario-sliders"
 import { InflowsTable } from "@/components/forecast/inflows-table"
 import { InsightsPanel } from "@/components/forecast/insights-panel"
-import { mockForecastData } from "@/lib/mock-data/forecasts"
+import {
+  getFilteredForecast,
+  getWeeklyBreakdown,
+  getInflowItems,
+  type TimeRange,
+} from "@/lib/mock-data/forecasts"
 import type { Scenario } from "@/lib/types"
 
-const TIME_RANGES = ["7D", "30D", "90D", "12M"] as const
+const TIME_RANGES: TimeRange[] = ["7D", "30D", "90D", "12M"]
+
+const TIME_RANGE_LABELS: Record<TimeRange, string> = {
+  "7D": "next 7 days",
+  "30D": "next 30 days",
+  "90D": "next 90 days",
+  "12M": "next 12 months",
+}
 
 const DEFAULT_SCENARIO: Scenario = {
   paymentDelayDays: 0,
@@ -28,20 +40,27 @@ const DEFAULT_SCENARIO: Scenario = {
   expenseIncreasePercent: 0,
 }
 
-// Compute totals from forecast data
-const totalInflows = mockForecastData.reduce((sum, d) => sum + d.inflows, 0)
-const totalOutflows = mockForecastData.reduce((sum, d) => sum + d.outflows, 0)
-const netCashFlow = totalInflows - totalOutflows
-const endingBalance =
-  mockForecastData[mockForecastData.length - 1]?.closingBalance || 0
-const currentBalance = 847234
-
-// Today is Feb 9, 2026 -> index 8 (0-based for Feb 1 = index 0)
-const todayIndex = 8
+const CURRENT_BALANCE = 847234
 
 export default function CashForecastPage() {
-  const [timeRange, setTimeRange] = useState<(typeof TIME_RANGES)[number]>("30D")
+  const [timeRange, setTimeRange] = useState<TimeRange>("30D")
   const [scenario, setScenario] = useState<Scenario>(DEFAULT_SCENARIO)
+
+  const { data, todayIndex, labelInterval, dateFormat } = useMemo(
+    () => getFilteredForecast(timeRange),
+    [timeRange]
+  )
+
+  const totalInflows = useMemo(() => data.reduce((sum, d) => sum + d.inflows, 0), [data])
+  const totalOutflows = useMemo(() => data.reduce((sum, d) => sum + d.outflows, 0), [data])
+  const netCashFlow = totalInflows - totalOutflows
+  const endingBalance = data[data.length - 1]?.closingBalance || CURRENT_BALANCE
+
+  const weeklyBreakdown = useMemo(() => getWeeklyBreakdown(data), [data])
+  const inflowItems = useMemo(() => getInflowItems(data), [data])
+
+  const inflowCount = data.reduce((c, d) => c + d.inflowItems.length, 0)
+  const outflowCount = data.reduce((c, d) => c + d.outflowItems.length, 0)
 
   return (
     <div className="flex flex-col gap-5">
@@ -91,7 +110,7 @@ export default function CashForecastPage() {
         <SummaryCard
           icon={<Landmark className="h-4 w-4" />}
           label="Current Balance"
-          value={currentBalance}
+          value={CURRENT_BALANCE}
           accentColor="blue"
           meta="Across 3 accounts"
         />
@@ -100,36 +119,42 @@ export default function CashForecastPage() {
           label="Forecasted Inflows"
           value={totalInflows}
           accentColor="green"
-          meta="23 expected payments"
+          meta={`${inflowCount} expected payments (${TIME_RANGE_LABELS[timeRange]})`}
         />
         <SummaryCard
           icon={<ArrowUpRight className="h-4 w-4" />}
           label="Scheduled Outflows"
           value={totalOutflows}
           accentColor="red"
-          meta="47 payments planned"
+          meta={`${outflowCount} payments planned (${TIME_RANGE_LABELS[timeRange]})`}
         />
         <SummaryCard
           icon={<TrendingUp className="h-4 w-4" />}
           label="Net Cash Flow"
           value={netCashFlow}
           accentColor="purple"
-          trend={{ value: 13.5, direction: "up", label: "+13.5% vs. last period" }}
+          trend={{
+            value: Math.round((netCashFlow / totalOutflows) * 100 * 10) / 10 || 0,
+            direction: netCashFlow >= 0 ? "up" : "down",
+            label: `${netCashFlow >= 0 ? "+" : ""}${(Math.round((netCashFlow / totalOutflows) * 100 * 10) / 10 || 0).toFixed(1)}% vs. outflows`,
+          }}
         />
         <SummaryCard
           icon={<Target className="h-4 w-4" />}
           label="Ending Balance"
           value={endingBalance}
           accentColor="cyan"
-          meta="Above $200K threshold"
+          meta={endingBalance >= 200000 ? "Above $200K threshold" : "Below $200K threshold"}
         />
       </div>
 
       {/* Main Chart */}
       <ForecastChart
-        data={mockForecastData}
+        data={data}
         scenario={scenario}
         todayIndex={todayIndex}
+        labelInterval={labelInterval}
+        dateFormat={dateFormat}
       />
 
       {/* Scenario Sliders */}
@@ -141,8 +166,8 @@ export default function CashForecastPage() {
 
       {/* Bottom 2-col Grid */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <InflowsTable />
-        <InsightsPanel />
+        <InflowsTable items={inflowItems} />
+        <InsightsPanel weeklyBreakdown={weeklyBreakdown} />
       </div>
     </div>
   )

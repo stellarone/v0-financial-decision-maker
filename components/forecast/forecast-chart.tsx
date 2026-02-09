@@ -19,6 +19,8 @@ interface ForecastChartProps {
   data: CashForecast[]
   scenario: Scenario
   todayIndex: number
+  labelInterval?: number
+  dateFormat?: (d: Date) => string
 }
 
 function formatCurrency(value: number) {
@@ -71,10 +73,17 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
   )
 }
 
+const defaultDateFormat = (d: Date) => {
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+  return `${monthNames[d.getMonth()]} ${d.getDate()}`
+}
+
 export function ForecastChart({
   data,
   scenario,
   todayIndex,
+  labelInterval = 4,
+  dateFormat = defaultDateFormat,
 }: ForecastChartProps) {
   const hasScenario =
     scenario.paymentDelayDays !== 0 ||
@@ -84,7 +93,7 @@ export function ForecastChart({
   const scenarioBalances = hasScenario ? applyScenario(data, scenario) : []
 
   const chartData = data.map((d, i) => ({
-    date: `Feb ${d.date.getDate()}`,
+    date: dateFormat(d.date),
     balance: d.closingBalance,
     inflows: d.inflows || undefined,
     outflows: d.outflows || undefined,
@@ -114,7 +123,7 @@ export function ForecastChart({
               tick={{ fontSize: 11, fill: "oklch(0.65 0 0)" }}
               tickLine={false}
               axisLine={{ stroke: "oklch(0.25 0.005 260)" }}
-              interval={4}
+              interval={labelInterval}
             />
             <YAxis
               tickFormatter={formatCurrency}
