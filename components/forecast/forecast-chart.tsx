@@ -160,9 +160,10 @@ export function ForecastChart({
               strokeDasharray="4 4"
               label={{
                 value: "Today",
-                position: "bottom",
+                position: "top",
                 fill: "oklch(0.65 0 0)",
                 fontSize: 10,
+                offset: 8,
               }}
             />
 
