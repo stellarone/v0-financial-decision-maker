@@ -17,6 +17,8 @@ import { ForecastChart } from "@/components/forecast/forecast-chart"
 import { ScenarioSliders } from "@/components/forecast/scenario-sliders"
 import { InflowsTable } from "@/components/forecast/inflows-table"
 import { InsightsPanel } from "@/components/forecast/insights-panel"
+import { CashCalendar } from "@/components/calendar/cash-calendar"
+import { mockCalendarItems } from "@/lib/mock-data/calendar-items"
 import {
   getFilteredForecast,
   getWeeklyBreakdown,
@@ -145,6 +147,14 @@ export default function CashForecastPage() {
           value={endingBalance}
           accentColor="cyan"
           meta={endingBalance >= 200000 ? "Above $200K threshold" : "Below $200K threshold"}
+        />
+      </div>
+
+      {/* Cash Calendar */}
+      <div className="rounded-xl border border-border bg-card p-4">
+        <CashCalendar
+          initialItems={mockCalendarItems}
+          initialBalance={CURRENT_BALANCE}
         />
       </div>
 
