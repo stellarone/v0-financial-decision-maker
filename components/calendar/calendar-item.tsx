@@ -13,7 +13,6 @@ export function CalendarItemCard({ item }: CalendarItemProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: item.id,
-      disabled: !item.isDraggable,
       data: { item },
     })
 
@@ -51,14 +50,13 @@ export function CalendarItemCard({ item }: CalendarItemProps) {
     <div
       ref={setNodeRef}
       style={style}
-      {...(item.isDraggable ? { ...attributes, ...listeners } : {})}
+      {...attributes}
+      {...listeners}
       className={cn(
-        "flex items-center justify-between rounded border-l-2 px-1.5 py-1 text-[10px] transition-opacity",
+        "flex items-center justify-between rounded border-l-2 px-1.5 py-1 text-[10px] transition-opacity cursor-grab active:cursor-grabbing",
         borderColor,
         bgColor,
-        isDragging && "opacity-60 scale-[1.02]",
-        item.isDraggable && "cursor-grab active:cursor-grabbing",
-        !item.isDraggable && isDue && "cursor-default"
+        isDragging && "opacity-60 scale-[1.02]"
       )}
     >
       <span className="truncate text-foreground/80 max-w-[60%]">
