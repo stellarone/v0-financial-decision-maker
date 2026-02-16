@@ -33,10 +33,21 @@ function getCalendarDays(year: number, month: number) {
   const days: Date[] = []
   const current = new Date(startDate)
 
-  // Always show 6 weeks
-  for (let i = 0; i < 42; i++) {
-    days.push(new Date(current))
-    current.setDate(current.getDate() + 1)
+  // Generate weeks until we've included the last day of the month
+  let includedLastDay = false
+  while (!includedLastDay) {
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(current)
+      days.push(d)
+      if (
+        d.getDate() === lastDay.getDate() &&
+        d.getMonth() === lastDay.getMonth() &&
+        d.getFullYear() === lastDay.getFullYear()
+      ) {
+        includedLastDay = true
+      }
+      current.setDate(current.getDate() + 1)
+    }
   }
 
   return { days, firstDay, lastDay }
