@@ -5,6 +5,7 @@ import React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
+  LayoutDashboard,
   Activity,
   Clock,
   FileText,
@@ -31,6 +32,7 @@ const navSections: NavSection[] = [
   {
     label: "Command Center",
     items: [
+      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
       { label: "Cash Forecast", href: "/cash-forecast", icon: Activity },
       {
         label: "Execution Queue",
