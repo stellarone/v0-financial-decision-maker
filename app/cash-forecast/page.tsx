@@ -15,14 +15,12 @@ import { PageHeader } from "@/components/layout/page-header"
 import { SummaryCard } from "@/components/shared/summary-card"
 import { ForecastChart } from "@/components/forecast/forecast-chart"
 import { ScenarioSliders } from "@/components/forecast/scenario-sliders"
-import { InflowsTable } from "@/components/forecast/inflows-table"
 import { InsightsPanel } from "@/components/forecast/insights-panel"
 import { CashCalendar } from "@/components/calendar/cash-calendar"
 import { mockCalendarItems } from "@/lib/mock-data/calendar-items"
 import {
   getFilteredForecast,
   getWeeklyBreakdown,
-  getInflowItems,
   type TimeRange,
 } from "@/lib/mock-data/forecasts"
 import type { Scenario } from "@/lib/types"
@@ -59,7 +57,6 @@ export default function CashForecastPage() {
   const endingBalance = data[data.length - 1]?.closingBalance || CURRENT_BALANCE
 
   const weeklyBreakdown = useMemo(() => getWeeklyBreakdown(data), [data])
-  const inflowItems = useMemo(() => getInflowItems(data), [data])
 
   const inflowCount = data.reduce((c, d) => c + d.inflowItems.length, 0)
   const outflowCount = data.reduce((c, d) => c + d.outflowItems.length, 0)
@@ -174,11 +171,8 @@ export default function CashForecastPage() {
         onReset={() => setScenario(DEFAULT_SCENARIO)}
       />
 
-      {/* Bottom 2-col Grid */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <InflowsTable items={inflowItems} />
-        <InsightsPanel weeklyBreakdown={weeklyBreakdown} />
-      </div>
+      {/* AI Insights */}
+      <InsightsPanel weeklyBreakdown={weeklyBreakdown} />
     </div>
   )
 }
