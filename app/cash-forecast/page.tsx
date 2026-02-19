@@ -6,12 +6,11 @@ import { cn } from "@/lib/utils"
 import { PageHeader } from "@/components/layout/page-header"
 import { ForecastChart } from "@/components/forecast/forecast-chart"
 import { ScenarioSliders } from "@/components/forecast/scenario-sliders"
-import { InsightsPanel } from "@/components/forecast/insights-panel"
+
 import { CashCalendar } from "@/components/calendar/cash-calendar"
 import { mockCalendarItems } from "@/lib/mock-data/calendar-items"
 import {
   getFilteredForecast,
-  getWeeklyBreakdown,
   type TimeRange,
 } from "@/lib/mock-data/forecasts"
 import type { Scenario } from "@/lib/types"
@@ -41,8 +40,6 @@ export default function CashForecastPage() {
     () => getFilteredForecast(timeRange),
     [timeRange]
   )
-
-  const weeklyBreakdown = useMemo(() => getWeeklyBreakdown(data), [data])
 
   return (
     <div className="flex flex-col gap-5">
@@ -111,8 +108,7 @@ export default function CashForecastPage() {
         onReset={() => setScenario(DEFAULT_SCENARIO)}
       />
 
-      {/* AI Insights */}
-      <InsightsPanel weeklyBreakdown={weeklyBreakdown} />
+
     </div>
   )
 }
