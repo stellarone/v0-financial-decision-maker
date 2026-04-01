@@ -63,7 +63,10 @@ export function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="hidden w-[260px] shrink-0 border-r border-border bg-sidebar md:flex md:flex-col">
+    <aside
+      className="hidden w-[260px] shrink-0 border-r border-border md:flex md:flex-col"
+      style={{ backgroundColor: "var(--background)" }}
+    >
       <nav className="flex flex-1 flex-col gap-6 overflow-y-auto adz-scrollbar p-4">
         {navSections.map((section) => (
           <div key={section.label}>

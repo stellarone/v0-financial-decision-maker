@@ -13,7 +13,10 @@ export function Header() {
   const [companyOpen, setCompanyOpen] = useState(false)
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-card px-6">
+    <header
+      className="flex h-16 shrink-0 items-center justify-between border-b border-border px-6"
+      style={{ backgroundColor: "var(--background)" }}
+    >
       {/* Left: Logo */}
       <div className="flex items-center gap-3">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-adz-blue">

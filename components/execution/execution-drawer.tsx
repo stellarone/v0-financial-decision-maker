@@ -26,7 +26,8 @@ export function ExecutionDrawer({ item, onClose }: ExecutionDrawerProps) {
     <div className="fixed inset-0 z-50 flex justify-end">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-background/60 backdrop-blur-sm"
+        className="absolute inset-0 backdrop-blur-sm"
+        style={{ backgroundColor: "color-mix(in srgb, var(--background) 60%, transparent)" }}
         onClick={onClose}
         onKeyDown={(e) => e.key === "Escape" && onClose()}
         role="button"

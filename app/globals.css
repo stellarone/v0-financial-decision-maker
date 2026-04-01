@@ -1,12 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(0.13 0.005 260);
+  --background: #060E1F;
   --foreground: oklch(0.95 0 0);
-  --card: oklch(0.16 0.005 260);
+  --card: rgba(21, 31, 54, 1);
   --card-foreground: oklch(0.95 0 0);
   --popover: oklch(0.16 0.005 260);
   --popover-foreground: oklch(0.95 0 0);
@@ -59,8 +60,8 @@
 }
 
 @theme inline {
-  --font-sans: 'Geist', 'Geist Fallback';
-  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --font-sans: 'Poppins', sans-serif;
+  --font-mono: 'Poppins', sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -119,7 +120,9 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--background);
+    font-family: 'Poppins', sans-serif;
+    @apply text-foreground;
   }
 }
 

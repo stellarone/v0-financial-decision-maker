@@ -19,7 +19,8 @@ export function SavePlanModal({ open, onClose }: SavePlanModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+        className="absolute inset-0 backdrop-blur-sm"
+        style={{ backgroundColor: "color-mix(in srgb, var(--background) 80%, transparent)" }}
         onClick={onClose}
         onKeyDown={(e) => e.key === "Escape" && onClose()}
         role="button"
