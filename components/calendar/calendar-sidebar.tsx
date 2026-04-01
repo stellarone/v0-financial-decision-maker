@@ -86,7 +86,10 @@ export function CalendarSidebar() {
     <aside className="hidden w-[320px] shrink-0 overflow-y-auto border-l border-border bg-card adz-scrollbar xl:flex xl:flex-col">
       <div className="flex flex-col gap-5 p-4">
         {/* Section 1: Autonomous Execution */}
-        <div className="rounded-lg border border-border bg-background p-4">
+        <div
+          className="rounded-lg border border-border p-4"
+          style={{ backgroundColor: "var(--background)" }}
+        >
           <div className="flex items-center gap-2 mb-3">
             <Zap className="h-4 w-4 text-adz-blue" />
             <h3 className="text-sm font-semibold text-foreground">
@@ -141,7 +144,10 @@ export function CalendarSidebar() {
         </div>
 
         {/* Section 2: 30-Day Forecast Mini Chart */}
-        <div className="rounded-lg border border-border bg-background p-4">
+        <div
+          className="rounded-lg border border-border p-4"
+          style={{ backgroundColor: "var(--background)" }}
+        >
           <h3 className="text-sm font-semibold text-foreground mb-3">
             30-Day Forecast
           </h3>
@@ -177,7 +183,10 @@ export function CalendarSidebar() {
         </div>
 
         {/* Section 3: Next Auto-Executions */}
-        <div className="rounded-lg border border-border bg-background p-4">
+        <div
+          className="rounded-lg border border-border p-4"
+          style={{ backgroundColor: "var(--background)" }}
+        >
           <h3 className="text-sm font-semibold text-foreground mb-3">
             Next Auto-Executions
           </h3>
@@ -231,7 +240,10 @@ export function CalendarSidebar() {
         </div>
 
         {/* Section 4: Alerts */}
-        <div className="rounded-lg border border-border bg-background p-4">
+        <div
+          className="rounded-lg border border-border p-4"
+          style={{ backgroundColor: "var(--background)" }}
+        >
           <h3 className="text-sm font-semibold text-foreground mb-3">
             Alerts Requiring Attention
           </h3>
