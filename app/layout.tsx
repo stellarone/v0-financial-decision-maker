@@ -1,8 +1,6 @@
 import React from "react"
 import type { Metadata, Viewport } from "next"
 import { Analytics } from "@vercel/analytics/next"
-import { Header } from "@/components/layout/header"
-import { Sidebar } from "@/components/layout/sidebar"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -25,15 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans antialiased">
-        <div className="flex h-screen flex-col overflow-hidden">
-          <Header />
-          <div className="flex flex-1 overflow-hidden">
-            <Sidebar />
-            <main className="flex-1 overflow-y-auto adz-scrollbar p-6">
-              {children}
-            </main>
-          </div>
-        </div>
+        {children}
         <Analytics />
       </body>
     </html>

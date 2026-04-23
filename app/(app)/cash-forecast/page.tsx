@@ -28,15 +28,12 @@ const DEFAULT_SCENARIO: Scenario = {
   expenseIncreasePercent: 0,
 }
 
-// Compute totals from forecast data
 const totalInflows = mockForecastData.reduce((sum, d) => sum + d.inflows, 0)
 const totalOutflows = mockForecastData.reduce((sum, d) => sum + d.outflows, 0)
 const netCashFlow = totalInflows - totalOutflows
 const endingBalance =
   mockForecastData[mockForecastData.length - 1]?.closingBalance || 0
 const currentBalance = 847234
-
-// Today is Feb 9, 2026 -> index 8 (0-based for Feb 1 = index 0)
 const todayIndex = 8
 
 export default function CashForecastPage() {
@@ -50,7 +47,6 @@ export default function CashForecastPage() {
         subtitle="AI-powered predictions &bull; 91% historical accuracy &bull; Updated 2 min ago"
         actions={
           <div className="flex items-center gap-2">
-            {/* Time Range Selector */}
             <div className="flex rounded-lg border border-border bg-secondary p-0.5">
               {TIME_RANGES.map((range) => (
                 <button
@@ -86,7 +82,6 @@ export default function CashForecastPage() {
         }
       />
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <SummaryCard
           icon={<Landmark className="h-4 w-4" />}
@@ -125,21 +120,18 @@ export default function CashForecastPage() {
         />
       </div>
 
-      {/* Main Chart */}
       <ForecastChart
         data={mockForecastData}
         scenario={scenario}
         todayIndex={todayIndex}
       />
 
-      {/* Scenario Sliders */}
       <ScenarioSliders
         scenario={scenario}
         onChange={setScenario}
         onReset={() => setScenario(DEFAULT_SCENARIO)}
       />
 
-      {/* Bottom 2-col Grid */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <InflowsTable />
         <InsightsPanel />

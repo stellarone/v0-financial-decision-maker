@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import {
   Landmark,
   ArrowDownLeft,
@@ -15,11 +15,100 @@ import { CashCalendar } from "@/components/calendar/cash-calendar"
 import { CalendarSidebar } from "@/components/calendar/calendar-sidebar"
 import { SavePlanModal } from "@/components/calendar/save-plan-modal"
 import { mockCalendarItems } from "@/lib/mock-data/calendar-items"
+import type { CalendarItem } from "@/lib/types"
 
 const INITIAL_BALANCE = 847234
 
-export default function CashCalendarPage() {
+export interface AcumaticaCalendarInflow {
+  id: string
+  dateISO: string
+  entityName: string
+  entityId: string
+  reference: string
+  amount: number
+}
+
+export interface AcumaticaCalendarOutflow {
+  id: string
+  dateISO: string
+  entityName: string
+  entityId: string
+  reference: string
+  amount: number
+}
+
+interface CashCalendarPageClientProps {
+  acumaticaInflows: AcumaticaCalendarInflow[]
+  acumaticaOutflows: AcumaticaCalendarOutflow[]
+}
+
+function toCalendarInflowItem(inflow: AcumaticaCalendarInflow): CalendarItem {
+  const parsedDate = new Date(`${inflow.dateISO}T00:00:00`)
+  const date = Number.isNaN(parsedDate.getTime()) ? new Date(2026, 1, 1) : parsedDate
+
+  return {
+    id: inflow.id,
+    date,
+    type: "inflow",
+    category: "expected",
+    entityName: inflow.entityName,
+    entityId: inflow.entityId,
+    reference: inflow.reference,
+    amount: inflow.amount,
+    isDraggable: false,
+  }
+}
+
+function toCalendarOutflowItem(outflow: AcumaticaCalendarOutflow): CalendarItem {
+  const parsedDate = new Date(`${outflow.dateISO}T00:00:00`)
+  const date = Number.isNaN(parsedDate.getTime()) ? new Date(2026, 1, 1) : parsedDate
+
+  return {
+    id: outflow.id,
+    date,
+    type: "outflow",
+    category: "due",
+    entityName: outflow.entityName,
+    entityId: outflow.entityId,
+    reference: outflow.reference,
+    amount: outflow.amount,
+    isDraggable: false,
+  }
+}
+
+export function CashCalendarPageClient({
+  acumaticaInflows = [],
+  acumaticaOutflows = [],
+}: CashCalendarPageClientProps) {
   const [saveModalOpen, setSaveModalOpen] = useState(false)
+
+  const mappedInflows = useMemo(
+    () => acumaticaInflows.map(toCalendarInflowItem),
+    [acumaticaInflows]
+  )
+  const mappedOutflows = useMemo(
+    () => acumaticaOutflows.map(toCalendarOutflowItem),
+    [acumaticaOutflows]
+  )
+
+  const expectedInflowsTotal = useMemo(
+    () => mappedInflows.reduce((sum, inflow) => sum + inflow.amount, 0),
+    [mappedInflows]
+  )
+  const apBillsTotal = useMemo(
+    () => mappedOutflows.reduce((sum, outflow) => sum + outflow.amount, 0),
+    [mappedOutflows]
+  )
+
+  const mergedCalendarItems = useMemo(() => {
+    const scheduledMockOutflows = mockCalendarItems.filter(
+      (item) => item.type === "outflow" && item.category === "scheduled"
+    )
+
+    return [...scheduledMockOutflows, ...mappedInflows, ...mappedOutflows].sort(
+      (a, b) => a.date.getTime() - b.date.getTime()
+    )
+  }, [mappedInflows, mappedOutflows])
 
   return (
     <>
@@ -60,16 +149,16 @@ export default function CashCalendarPage() {
           <SummaryCard
             icon={<ArrowDownLeft className="h-4 w-4" />}
             label="Expected Inflows (30d)"
-            value={344200}
+            value={expectedInflowsTotal}
             accentColor="green"
-            meta="23 invoices &bull; 89% predicted on-time"
+            meta={`${mappedInflows.length} invoices from Acumatica`}
           />
           <SummaryCard
             icon={<ArrowUpRight className="h-4 w-4" />}
-            label="Scheduled Outflows (30d)"
-            value={297050}
+            label="Expected Outflows"
+            value={apBillsTotal}
             accentColor="red"
-            meta="47 payments &bull; 12 auto-scheduled"
+            meta={`${mappedOutflows.length} bills from Acumatica`}
           />
           <SummaryCard
             icon={<Target className="h-4 w-4" />}
@@ -84,7 +173,7 @@ export default function CashCalendarPage() {
         <div className="mt-5 flex flex-1 gap-4 overflow-hidden">
           <div className="flex-1 overflow-y-auto adz-scrollbar">
             <CashCalendar
-              initialItems={mockCalendarItems}
+              initialItems={mergedCalendarItems}
               initialBalance={INITIAL_BALANCE}
             />
           </div>
