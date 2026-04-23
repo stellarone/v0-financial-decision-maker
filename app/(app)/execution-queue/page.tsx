@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useMemo, useState } from "react"
 import { Pause, Play, AlertTriangle, Check, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { PageHeader } from "@/components/layout/page-header"
@@ -23,7 +23,6 @@ export default function ExecutionQueuePage() {
   const [selectedItem, setSelectedItem] = useState<ExecutionItem | null>(null)
   const [autonomousMode, setAutonomousMode] = useState(true)
 
-  // Compute counts
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: mockExecutionItems.length }
     for (const item of mockExecutionItems) {
@@ -32,25 +31,27 @@ export default function ExecutionQueuePage() {
     return c
   }, [])
 
-  // Filtered items
   const filteredItems = useMemo(() => {
     if (activeFilter === "all") return mockExecutionItems
     return mockExecutionItems.filter((item) => item.status === activeFilter)
   }, [activeFilter])
 
-  // Pending approval items
   const pendingItems = mockExecutionItems.filter(
     (item) => item.status === "pending_approval"
   )
 
-  // Metrics
   const queuedCount = counts.scheduled || 0
   const todayCount = (counts.executing || 0) + (counts.completed || 0)
   const pendingCount = counts.pending_approval || 0
   const failedCount = counts.failed || 0
   const totalAmount = mockExecutionItems
-    .filter((i) => i.status === "scheduled" || i.status === "executing" || i.status === "pending_approval")
-    .reduce((sum, i) => sum + i.amount, 0)
+    .filter(
+      (item) =>
+        item.status === "scheduled" ||
+        item.status === "executing" ||
+        item.status === "pending_approval"
+    )
+    .reduce((sum, item) => sum + item.amount, 0)
 
   return (
     <div className="flex flex-col gap-5">
@@ -77,10 +78,9 @@ export default function ExecutionQueuePage() {
         }
       />
 
-      {/* Status Banner */}
       <div className="rounded-lg border border-border bg-card p-5">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-6 flex-wrap">
+          <div className="flex flex-wrap items-center gap-6">
             <div className="flex items-center gap-2">
               <span
                 className={cn(
@@ -94,10 +94,17 @@ export default function ExecutionQueuePage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <MetricBox label="Queued" value={queuedCount + pendingCount + (counts.executing || 0)} />
+              <MetricBox
+                label="Queued"
+                value={queuedCount + pendingCount + (counts.executing || 0)}
+              />
               <MetricBox label="Today" value={todayCount} />
               <MetricBox label="Pending" value={pendingCount} highlight="amber" />
-              <MetricBox label="Failed" value={failedCount} highlight={failedCount > 0 ? "red" : undefined} />
+              <MetricBox
+                label="Failed"
+                value={failedCount}
+                highlight={failedCount > 0 ? "red" : undefined}
+              />
               <MetricBox
                 label="Total"
                 value={`$${(totalAmount / 1000).toFixed(0)}K`}
@@ -126,16 +133,15 @@ export default function ExecutionQueuePage() {
         </div>
       </div>
 
-      {/* Pending Approvals Section */}
       {pendingItems.length > 0 && (
         <div className="rounded-lg border border-adz-amber/30 bg-adz-amber-dim/30 p-5">
-          <div className="flex items-center gap-2 mb-3">
+          <div className="mb-3 flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-adz-amber" />
             <span className="text-sm font-semibold text-adz-amber">
               {pendingItems.length} PAYMENTS REQUIRE YOUR APPROVAL
             </span>
           </div>
-          <p className="text-xs text-muted-foreground mb-3">
+          <p className="mb-3 text-xs text-muted-foreground">
             These exceed auto-approval thresholds or have policy flags
           </p>
           <div className="flex flex-col gap-2">
@@ -151,7 +157,7 @@ export default function ExecutionQueuePage() {
                   <p className="text-xs text-muted-foreground">
                     Reason:{" "}
                     {item.amount >= 25000
-                      ? `Exceeds $25K auto-limit`
+                      ? "Exceeds $25K auto-limit"
                       : "First payment to new vendor"}
                   </p>
                 </div>
@@ -180,7 +186,6 @@ export default function ExecutionQueuePage() {
         </div>
       )}
 
-      {/* Filter Tabs */}
       <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1">
         {FILTER_TABS.map((tab) => (
           <button
@@ -191,7 +196,7 @@ export default function ExecutionQueuePage() {
               "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
               activeFilter === tab.value
                 ? "bg-adz-blue text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
             )}
           >
             {tab.label}
@@ -209,13 +214,12 @@ export default function ExecutionQueuePage() {
         ))}
       </div>
 
-      {/* Execution Timeline */}
       <div className="rounded-lg border border-border bg-card p-5">
         <h3 className="mb-3 text-sm font-semibold text-foreground">
           {"Today's"} Execution Timeline
         </h3>
         <div className="relative pl-6">
-          <div className="absolute left-[11px] top-0 bottom-0 w-px bg-border" />
+          <div className="absolute bottom-0 left-[11px] top-0 w-px bg-border" />
           {[
             { time: "6:00 AM", name: "Packaging Materials Inc", amount: -9800, status: "completed" },
             { time: "9:00 AM", name: "Raw Materials Co", amount: -18200, status: "executing" },
@@ -234,11 +238,11 @@ export default function ExecutionQueuePage() {
                       : "bg-border"
                 )}
               />
-              <span className="w-16 text-xs text-muted-foreground font-mono">
+              <span className="w-16 font-mono text-xs text-muted-foreground">
                 {entry.time}
               </span>
               <span className="text-xs text-foreground">{entry.name}</span>
-              <span className="font-mono text-xs font-semibold text-adz-red ml-auto">
+              <span className="ml-auto font-mono text-xs font-semibold text-adz-red">
                 -${Math.abs(entry.amount).toLocaleString()}
               </span>
               <span
@@ -258,14 +262,9 @@ export default function ExecutionQueuePage() {
         </div>
       </div>
 
-      {/* Execution List */}
       <div className="flex flex-col gap-2">
         {filteredItems.map((item) => (
-          <ExecutionItemRow
-            key={item.id}
-            item={item}
-            onSelect={setSelectedItem}
-          />
+          <ExecutionItemRow key={item.id} item={item} onSelect={setSelectedItem} />
         ))}
         {filteredItems.length === 0 && (
           <div className="flex items-center justify-center rounded-lg border border-border bg-card p-12">
@@ -276,11 +275,7 @@ export default function ExecutionQueuePage() {
         )}
       </div>
 
-      {/* Detail Drawer */}
-      <ExecutionDrawer
-        item={selectedItem}
-        onClose={() => setSelectedItem(null)}
-      />
+      <ExecutionDrawer item={selectedItem} onClose={() => setSelectedItem(null)} />
     </div>
   )
 }
@@ -295,7 +290,7 @@ function MetricBox({
   highlight?: "amber" | "red"
 }) {
   return (
-    <div className="rounded-lg bg-secondary px-3 py-2 text-center min-w-[60px]">
+    <div className="min-w-[60px] rounded-lg bg-secondary px-3 py-2 text-center">
       <p
         className={cn(
           "font-mono text-lg font-bold",

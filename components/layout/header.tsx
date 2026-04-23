@@ -1,16 +1,71 @@
 "use client"
 
-import { ChevronDown, Zap, User } from "lucide-react"
-import { useState } from "react"
+import { ChevronDown, LoaderCircle, LogOut, User, Zap } from "lucide-react"
+import { useMemo, useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
+import { createBrowserSupabaseClient } from "@/lib/supabase/client"
 
 const companies = [
   { id: "1", name: "Demo Company" },
   { id: "2", name: "Subsidiary A" },
 ]
 
-export function Header() {
+interface HeaderProps {
+  userEmail?: string | null
+  userName?: string | null
+}
+
+function getUserLabel(userName?: string | null, userEmail?: string | null) {
+  return userName?.trim() || userEmail?.trim() || "Signed in user"
+}
+
+function getUserInitials(userName?: string | null, userEmail?: string | null) {
+  const source = getUserLabel(userName, userEmail)
+  const initials = source
+    .split(/[\s@._-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((token) => token[0]?.toUpperCase())
+    .join("")
+
+  return initials || "U"
+}
+
+export function Header({ userEmail, userName }: HeaderProps) {
+  const router = useRouter()
   const [selectedCompany, setSelectedCompany] = useState(companies[0])
   const [companyOpen, setCompanyOpen] = useState(false)
+  const [isSigningOut, startSigningOut] = useTransition()
+  const userLabel = useMemo(
+    () => getUserLabel(userName, userEmail),
+    [userEmail, userName]
+  )
+  const userInitials = useMemo(
+    () => getUserInitials(userName, userEmail),
+    [userEmail, userName]
+  )
+
+  function handleSignOut() {
+    startSigningOut(async () => {
+      const supabase = createBrowserSupabaseClient()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      await fetch("/api/v1/auth/logout", {
+        headers: {
+          ...(session?.access_token
+            ? { Authorization: `Bearer ${session.access_token}` }
+            : {}),
+        },
+        method: "POST",
+      }).catch(() => null)
+
+      await supabase.auth.signOut()
+      router.replace("/sign-in")
+      router.refresh()
+    })
+  }
 
   return (
     <header
@@ -37,7 +92,6 @@ export function Header() {
 
       {/* Right: Company Selector + User */}
       <div className="flex items-center gap-4">
-        {/* Company Selector */}
         <div className="relative">
           <button
             type="button"
@@ -70,13 +124,47 @@ export function Header() {
           )}
         </div>
 
-        {/* User Avatar */}
+        <div className="hidden items-center gap-3 rounded-full border border-border bg-secondary px-3 py-1.5 md:flex">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-adz-blue/20 text-xs font-semibold text-adz-blue">
+            {userInitials}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-foreground">
+              {userLabel}
+            </p>
+            {userEmail && (
+              <p className="truncate text-xs text-muted-foreground">
+                {userEmail}
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            disabled={isSigningOut}
+            className="flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isSigningOut ? (
+              <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <LogOut className="h-3.5 w-3.5" />
+            )}
+            Sign out
+          </button>
+        </div>
+
         <button
           type="button"
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-adz-blue/20 text-adz-blue transition-colors hover:bg-adz-blue/30"
-          aria-label="User menu"
+          onClick={handleSignOut}
+          disabled={isSigningOut}
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-adz-blue/20 text-adz-blue transition-colors hover:bg-adz-blue/30 md:hidden"
+          aria-label="Sign out"
         >
-          <User className="h-4 w-4" />
+          {isSigningOut ? (
+            <LoaderCircle className="h-4 w-4 animate-spin" />
+          ) : (
+            <User className="h-4 w-4" />
+          )}
         </button>
       </div>
     </header>
