@@ -45,9 +45,8 @@ export default async function SignInPage() {
                 Command cash, forecasts, and execution in one workspace.
               </h1>
               <p className="max-w-md text-pretty text-base leading-relaxed text-muted-foreground">
-                Sign in with your Stellar One account to reach the cash
-                calendar, forecast views, and execution queue—secured with the
-                same platform authentication as the member portal.
+                Sign in with your Stellar One account to open the cash
+                calendar, forecasts, and execution queue in one place.
               </p>
             </div>
           </div>
