@@ -182,6 +182,13 @@ export class AcumaticaClient {
     });
   }
 
+  /** GET /api/v1/cash/summary — CA-CashSummary Generic Inquiry rows. */
+  getCashSummary(input: T.CashSummaryQuery): Promise<T.AcumaticaCashSummary[]> {
+    return this.call("/cash/summary", {
+      query: { organizationId: input.organizationId },
+    });
+  }
+
   /** GET /api/v1/expense-accounts/lookup — search-as-you-type AP expense-account lookup. */
   lookupExpenseAccount(
     input: T.ExpenseAccountsLookupQuery
