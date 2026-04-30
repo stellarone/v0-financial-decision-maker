@@ -113,6 +113,9 @@ export interface AcumaticaCashSummary {
   AccountCD?: AcumaticaValue<string> | string;
   AccountID?: AcumaticaValue<string | number> | string | number;
   Description?: AcumaticaValue<string> | string;
+  FinancialPeriod?: AcumaticaValue<string> | string;
+  FinancialPeriodID?: AcumaticaValue<string> | string;
+  PTDBalance?: AcumaticaValue<number | string> | number | string;
   CurrentBalance?: AcumaticaValue<number | string> | number | string;
   Balance?: AcumaticaValue<number | string> | number | string;
   CashBalance?: AcumaticaValue<number | string> | number | string;
