@@ -8,12 +8,14 @@ const DEFAULT_PLATFORM_ACUMATICA_URL = "https://acumatica.stellarone.ai"
 const SOURCE_APP = "finance"
 const LOG_PREFIX = "[acumatica-calendar][cash-summary]"
 const BALANCE_FIELD_CANDIDATES = [
+  "PTDBalance",
   "CurrentBalance",
   "Balance",
   "CashBalance",
   "CuryBalance",
   "AvailableBalance",
 ] as const
+const PERIOD_FIELD_CANDIDATES = ["FinancialPeriodID", "FinancialPeriod"] as const
 
 function readRequiredEnv(name: "PLATFORM_ACUMATICA_SERVICE_TOKEN") {
   const value = process.env[name]
@@ -63,7 +65,9 @@ function parseBalance(value: unknown) {
 
 function getFieldValue(
   row: AcumaticaCashSummary,
-  fieldName: (typeof BALANCE_FIELD_CANDIDATES)[number]
+  fieldName:
+    | (typeof BALANCE_FIELD_CANDIDATES)[number]
+    | (typeof PERIOD_FIELD_CANDIDATES)[number]
 ) {
   if (fieldName in row) return row[fieldName]
 
@@ -72,6 +76,67 @@ function getFieldValue(
     ([key]) => key.toLowerCase() === lowerFieldName
   )
   return matchingEntry?.[1]
+}
+
+function parsePeriodValue(value: unknown) {
+  const unwrapped = unwrapAcumaticaValue(value)
+  if (typeof unwrapped !== "string" && typeof unwrapped !== "number") return null
+
+  const period = String(unwrapped).trim()
+  return period.length > 0 ? period : null
+}
+
+function getCashSummaryPeriod(row: AcumaticaCashSummary) {
+  for (const fieldName of PERIOD_FIELD_CANDIDATES) {
+    const period = parsePeriodValue(getFieldValue(row, fieldName))
+    if (period) return period
+  }
+
+  return null
+}
+
+function getPeriodSortKey(period: string) {
+  const digits = period.replace(/\D/g, "")
+  if (digits.length !== 6) return null
+
+  const yearFirst = Number(digits.slice(0, 4))
+  const monthAfterYear = Number(digits.slice(4, 6))
+  if (monthAfterYear >= 1 && monthAfterYear <= 12) {
+    return yearFirst * 100 + monthAfterYear
+  }
+
+  const monthFirst = Number(digits.slice(0, 2))
+  const yearAfterMonth = Number(digits.slice(2, 6))
+  if (monthFirst >= 1 && monthFirst <= 12) {
+    return yearAfterMonth * 100 + monthFirst
+  }
+
+  return null
+}
+
+function comparePeriods(left: string, right: string) {
+  const leftSortKey = getPeriodSortKey(left)
+  const rightSortKey = getPeriodSortKey(right)
+
+  if (leftSortKey !== null && rightSortKey !== null) {
+    return leftSortKey - rightSortKey
+  }
+
+  return left.localeCompare(right)
+}
+
+function getLatestCashSummaryPeriod(rows: AcumaticaCashSummary[]) {
+  let latestPeriod: string | null = null
+
+  rows.forEach((row) => {
+    const period = getCashSummaryPeriod(row)
+    if (!period) return
+    if (!latestPeriod || comparePeriods(period, latestPeriod) > 0) {
+      latestPeriod = period
+    }
+  })
+
+  return latestPeriod
 }
 
 export function extractCashSummaryBalance(row: AcumaticaCashSummary) {
@@ -117,6 +182,11 @@ export async function loadCurrentCashPositionFromCashSummary(
       elapsedMs: Date.now() - startedAt,
     })
 
+    const latestPeriod = getLatestCashSummaryPeriod(rows)
+    const latestPeriodRows = latestPeriod
+      ? rows.filter((row) => getCashSummaryPeriod(row) === latestPeriod)
+      : []
+    const rowsToMap = latestPeriod ? latestPeriodRows : []
     const fieldCounts: Record<string, number> = {}
     const skippedSamples: Array<{ index: number; keys: string[] }> = []
     const mappedSamples: Array<{
@@ -127,7 +197,7 @@ export async function loadCurrentCashPositionFromCashSummary(
     let total = 0
     let mappedCount = 0
 
-    rows.forEach((row, index) => {
+    rowsToMap.forEach((row, index) => {
       const extracted = extractCashSummaryBalance(row)
       if (!extracted) {
         if (skippedSamples.length < 5) {
@@ -151,6 +221,8 @@ export async function loadCurrentCashPositionFromCashSummary(
     if (mappedCount === 0) {
       console.warn(`${LOG_PREFIX} No usable balance fields found in CA-CashSummary`, {
         rowCount: rows.length,
+        latestPeriod,
+        latestPeriodRowCount: latestPeriodRows.length,
         balanceFieldCandidates: BALANCE_FIELD_CANDIDATES,
         skippedSamples,
         elapsedMs: Date.now() - startedAt,
@@ -161,14 +233,18 @@ export async function loadCurrentCashPositionFromCashSummary(
     if (skippedSamples.length > 0) {
       console.warn(`${LOG_PREFIX} Some CA-CashSummary rows were skipped`, {
         rowCount: rows.length,
+        latestPeriod,
+        latestPeriodRowCount: latestPeriodRows.length,
         mappedCount,
-        skippedCount: rows.length - mappedCount,
+        skippedCount: rowsToMap.length - mappedCount,
         skippedSamples,
       })
     }
 
     console.info(`${LOG_PREFIX} Completed CA-CashSummary mapping`, {
       rowCount: rows.length,
+      latestPeriod,
+      latestPeriodRowCount: latestPeriodRows.length,
       mappedCount,
       fieldCounts,
       mappedSamples,
