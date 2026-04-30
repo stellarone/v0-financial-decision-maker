@@ -1,7 +1,17 @@
 import { redirect } from "next/navigation"
-import type { User } from "@supabase/supabase-js"
-import { getServerUser } from "@/lib/supabase/server"
+import {
+  createServiceRoleSupabaseClient,
+  getServerClaims,
+  type ServerAuthClaims,
+} from "@/lib/supabase/server"
 import type { AuthContext } from "./types"
+
+interface ProfileOrganizationData {
+  is_employee?: boolean | null
+  organization_id?: string | null
+  organizations?: { domain?: string | null; secondary_domain?: string | null } | null
+  role?: string | null
+}
 
 function readString(
   value: unknown,
@@ -12,9 +22,28 @@ function readString(
     : fallbackValue
 }
 
-function buildAuthContext(user: User): AuthContext {
-  const appMetadata = user.app_metadata
-  const userMetadata = user.user_metadata
+function readRecord(value: unknown): Record<string, unknown> {
+  return typeof value === "object" && value !== null
+    ? (value as Record<string, unknown>)
+    : {}
+}
+
+function normalizeOrganizationDomain(value: string | null): string | null {
+  if (value && /^\d+-stellarone\.ai$/.test(value)) {
+    return "stellarone.ai"
+  }
+
+  return value
+}
+
+function buildAuthContext(claims: ServerAuthClaims): AuthContext | null {
+  const userId = readString(claims.sub)
+  if (!userId) {
+    return null
+  }
+
+  const appMetadata = readRecord(claims.app_metadata)
+  const userMetadata = readRecord(claims.user_metadata)
 
   return {
     organization: {
@@ -27,20 +56,55 @@ function buildAuthContext(user: User): AuthContext {
       role: readString(appMetadata.organization_role),
     },
     profile: {
-      email: user.email ?? null,
+      email: readString(claims.email),
       fullName:
         readString(userMetadata.full_name) ??
         readString(userMetadata.name) ??
         readString(appMetadata.full_name),
-      id: user.id,
+      id: userId,
     },
-    user,
+  }
+}
+
+async function fillOrganizationFromProfile(auth: AuthContext): Promise<AuthContext> {
+  if (auth.organization.id) {
+    return auth
+  }
+
+  const supabase = createServiceRoleSupabaseClient()
+  const { data } = await supabase
+    .from("profiles")
+    .select("organization_id, is_employee, role, organizations(domain, secondary_domain)")
+    .eq("id", auth.profile.id)
+    .maybeSingle<ProfileOrganizationData>()
+
+  if (!data?.organization_id) {
+    return auth
+  }
+
+  const organizationDomain =
+    readString(data.organizations?.domain) ??
+    readString(data.organizations?.secondary_domain)
+
+  return {
+    ...auth,
+    organization: {
+      domain:
+        auth.organization.domain ??
+        normalizeOrganizationDomain(organizationDomain),
+      id: data.organization_id,
+      isEmployee:
+        auth.organization.isEmployee ??
+        (typeof data.is_employee === "boolean" ? data.is_employee : null),
+      role: auth.organization.role ?? readString(data.role),
+    },
   }
 }
 
 export async function tryOrgAuth(): Promise<AuthContext | null> {
-  const user = await getServerUser()
-  return user ? buildAuthContext(user) : null
+  const claims = await getServerClaims()
+  const auth = claims ? buildAuthContext(claims) : null
+  return auth ? fillOrganizationFromProfile(auth) : null
 }
 
 export async function withAuth(): Promise<AuthContext> {

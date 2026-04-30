@@ -1,5 +1,3 @@
-import type { User } from "@supabase/supabase-js"
-
 export interface AuthProfile {
   email: string | null
   fullName: string | null
@@ -16,5 +14,4 @@ export interface AuthOrganization {
 export interface AuthContext {
   organization: AuthOrganization
   profile: AuthProfile
-  user: User
 }

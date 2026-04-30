@@ -12,11 +12,11 @@ Set these in the consumer's `.env.local`:
 
 ```env
 PLATFORM_ACUMATICA_URL=https://acumatica.stellarone.ai
-SUPABASE_SERVICE_ROLE_KEY=...
+PLATFORM_ACUMATICA_SERVICE_TOKEN=...
 ```
 
 The client sends:
-- `Authorization: Bearer <service-role-key>` — Profile A gate.
+- `Authorization: Bearer <platform-acumatica-service-token>` — Profile A gate.
 - `x-stellar-app: <source-app>` — required by all endpoints; used for audit + filtering.
 - `x-stellar-user-jwt: <jwt>` — **Profile B only** (credentials writes, maintenance-mode, migration-mode). Pass a user JWT when available.
 - `x-stellar-request-id: <uuid>` — optional correlation id for tracing across services.
@@ -28,7 +28,7 @@ import { AcumaticaClient, AcumaticaError } from "@/lib/clients/acumatica-client"
 
 const client = new AcumaticaClient({
   baseUrl: process.env.PLATFORM_ACUMATICA_URL!,
-  serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  serviceToken: process.env.PLATFORM_ACUMATICA_SERVICE_TOKEN!,
   sourceApp: "member-portal",
   userJwt: currentUserSession?.access_token,
 });
