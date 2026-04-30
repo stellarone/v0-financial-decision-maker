@@ -108,6 +108,19 @@ export interface AcumaticaTrialBalance {
   FinancialPeriod?: AcumaticaValue<string>;
 }
 
+export interface AcumaticaCashSummary {
+  Account?: AcumaticaValue<string> | string;
+  AccountCD?: AcumaticaValue<string> | string;
+  AccountID?: AcumaticaValue<string | number> | string | number;
+  Description?: AcumaticaValue<string> | string;
+  CurrentBalance?: AcumaticaValue<number | string> | number | string;
+  Balance?: AcumaticaValue<number | string> | number | string;
+  CashBalance?: AcumaticaValue<number | string> | number | string;
+  CuryBalance?: AcumaticaValue<number | string> | number | string;
+  AvailableBalance?: AcumaticaValue<number | string> | number | string;
+  [field: string]: unknown;
+}
+
 export interface AcumaticaARInvoice {
   Type?: AcumaticaValue<string>;
   ReferenceNbr?: AcumaticaValue<string>;
@@ -178,6 +191,10 @@ export interface AccountsQuery {
 }
 
 export interface TrialBalanceQuery {
+  organizationId: string;
+}
+
+export interface CashSummaryQuery {
   organizationId: string;
 }
 
