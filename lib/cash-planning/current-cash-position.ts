@@ -110,8 +110,20 @@ export async function loadCurrentCashPositionFromCashSummary(
     })
 
     const rows = await client.getCashSummary({ organizationId })
+    console.info(`${LOG_PREFIX} Received CA-CashSummary rows`, {
+      rowCount: rows.length,
+      firstRowKeys: rows[0] ? Object.keys(rows[0]).slice(0, 20) : [],
+      balanceFieldCandidates: BALANCE_FIELD_CANDIDATES,
+      elapsedMs: Date.now() - startedAt,
+    })
+
     const fieldCounts: Record<string, number> = {}
     const skippedSamples: Array<{ index: number; keys: string[] }> = []
+    const mappedSamples: Array<{
+      index: number
+      fieldName: (typeof BALANCE_FIELD_CANDIDATES)[number]
+      balance: number
+    }> = []
     let total = 0
     let mappedCount = 0
 
@@ -127,6 +139,13 @@ export async function loadCurrentCashPositionFromCashSummary(
       total += extracted.balance
       mappedCount += 1
       fieldCounts[extracted.fieldName] = (fieldCounts[extracted.fieldName] ?? 0) + 1
+      if (mappedSamples.length < 5) {
+        mappedSamples.push({
+          index,
+          fieldName: extracted.fieldName,
+          balance: extracted.balance,
+        })
+      }
     })
 
     if (mappedCount === 0) {
@@ -152,6 +171,7 @@ export async function loadCurrentCashPositionFromCashSummary(
       rowCount: rows.length,
       mappedCount,
       fieldCounts,
+      mappedSamples,
       total,
       elapsedMs: Date.now() - startedAt,
     })
