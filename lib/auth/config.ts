@@ -2,6 +2,7 @@ type RequiredEnvKey =
   | "NEXT_PUBLIC_SUPABASE_URL"
   | "NEXT_PUBLIC_SUPABASE_ANON_KEY"
   | "PLATFORM_AUTH_URL"
+  | "PLATFORM_AUTH_SERVICE_TOKEN"
 
 type PublicEnvKey = "NEXT_PUBLIC_SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KEY"
 
@@ -25,7 +26,7 @@ function readOptionalEnv(key: string): string | undefined {
 
 function readRequiredEnv(key: RequiredEnvKey): string {
   const value =
-    key === "PLATFORM_AUTH_URL"
+    key === "PLATFORM_AUTH_URL" || key === "PLATFORM_AUTH_SERVICE_TOKEN"
       ? readOptionalEnv(key)
       : readPublicEnv(key as PublicEnvKey)
 
@@ -59,4 +60,8 @@ export function getPlatformAuthConfig() {
     appId: readOptionalEnv("PLATFORM_AUTH_APP_ID") ?? "financial-decision-maker",
     url: readRequiredEnv("PLATFORM_AUTH_URL"),
   }
+}
+
+export function getPlatformAuthServiceToken() {
+  return readRequiredEnv("PLATFORM_AUTH_SERVICE_TOKEN")
 }

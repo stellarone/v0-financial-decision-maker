@@ -44,7 +44,7 @@ interface AcumaticaCustomerRow {
   CustomerName?: { value: string }
 }
 
-function readRequiredEnv(name: "SUPABASE_SERVICE_ROLE_KEY" | "ACUMATICA_ORGANIZATION_ID") {
+function readRequiredEnv(name: "PLATFORM_ACUMATICA_SERVICE_TOKEN") {
   const value = process.env[name]
   if (!value) {
     console.warn(`[acumatica-calendar] Missing ${name}; falling back to mock inflows`)
@@ -258,13 +258,14 @@ function mapInvoiceToCalendarInflow(
   }
 }
 
-export async function loadCalendarInflowsFromARInvoices(): Promise<CalendarInflowSeed[]> {
+export async function loadCalendarInflowsFromARInvoices(
+  organizationId: string
+): Promise<CalendarInflowSeed[]> {
   const startedAt = Date.now()
-  const serviceRoleKey = readRequiredEnv("SUPABASE_SERVICE_ROLE_KEY")
-  const organizationId = readRequiredEnv("ACUMATICA_ORGANIZATION_ID")
+  const serviceToken = readRequiredEnv("PLATFORM_ACUMATICA_SERVICE_TOKEN")
   const baseUrl = readOptionalEnv("PLATFORM_ACUMATICA_URL")
 
-  if (!serviceRoleKey || !organizationId) {
+  if (!serviceToken) {
     return []
   }
 
@@ -276,7 +277,7 @@ export async function loadCalendarInflowsFromARInvoices(): Promise<CalendarInflo
 
   const client = new AcumaticaClient({
     baseUrl,
-    serviceRoleKey,
+    serviceToken,
     sourceApp: SOURCE_APP,
     requestId: crypto.randomUUID(),
   })
