@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  allowedDevOrigins: ["*.finance.localhost"],
+  allowedDevOrigins: ["finance.localhost", "*.finance.localhost"],
   typescript: {
     ignoreBuildErrors: true,
   },
