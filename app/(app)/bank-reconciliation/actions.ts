@@ -18,8 +18,8 @@ import {
   resolveBankTransactionDrCr,
   resolveMatchedReferenceNbr,
 } from "@/lib/bank-reconciliation/build-create-entry-payload"
+import { completeBankTransactionReconciliation } from "@/lib/bank-reconciliation/complete-bank-transaction-reconciliation"
 import { resolveMatchModuleFields } from "@/lib/bank-reconciliation/resolve-match-module-fields"
-import { updateReconDecisionWithRetry } from "@/lib/bank-reconciliation/update-recon-decision-with-retry"
 import { createAcumaticaClient } from "@/lib/clients/acumatica"
 import { withActionAuth } from "@/lib/services/app/auth/with-action-auth"
 import { finopsDb } from "@/lib/services/finops-db"
@@ -96,17 +96,17 @@ export const matchDecision = withActionAuth(
     }
 
     const client = createAcumaticaClient({ userJwt: session.access_token })
-    await client.updateBankTransactionMatch({
+    await completeBankTransactionReconciliation({
+      decisionId,
       organizationId: ctx.organization.id!,
+      client,
       matchPayload,
-    })
-
-    await updateReconDecisionWithRetry(decisionId, {
-      status: RECON_DECISION_STATUS.COMPLETED,
-      final_doc_type: matchedSourceType || undefined,
-      final_ref_nbr: matchedRefNbr || undefined,
-      reviewed_by: ctx.profile.email || ctx.profile.id,
-      reviewed_at: new Date().toISOString(),
+      decisionUpdates: {
+        final_doc_type: matchedSourceType || undefined,
+        final_ref_nbr: matchedRefNbr || undefined,
+        reviewed_by: ctx.profile.email || ctx.profile.id,
+        reviewed_at: new Date().toISOString(),
+      },
     })
 
     revalidatePath("/bank-reconciliation")
@@ -223,8 +223,10 @@ export const createEntryDecision = withActionAuth(
       { vendor, customer }
     )
 
-    await client.updateBankTransactionMatch({
+    await completeBankTransactionReconciliation({
+      decisionId,
       organizationId,
+      client,
       matchPayload: {
         CashAccount: { value: (bankTransaction.cashAccount as string) || "1000" },
         ExtRefNbr: { value: (bankTransaction.extRefNbr as string) || "" },
@@ -238,14 +240,12 @@ export const createEntryDecision = withActionAuth(
           },
         ],
       },
-    })
-
-    await updateReconDecisionWithRetry(decisionId, {
-      status: RECON_DECISION_STATUS.COMPLETED,
-      final_doc_type: docType,
-      final_ref_nbr: refNbr || undefined,
-      reviewed_by: ctx.profile.email || ctx.profile.id,
-      reviewed_at: new Date().toISOString(),
+      decisionUpdates: {
+        final_doc_type: docType,
+        final_ref_nbr: refNbr || undefined,
+        reviewed_by: ctx.profile.email || ctx.profile.id,
+        reviewed_at: new Date().toISOString(),
+      },
     })
 
     revalidatePath("/bank-reconciliation")

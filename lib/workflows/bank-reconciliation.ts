@@ -19,7 +19,7 @@ import {
   writeResultEvent,
   writeStepCompleteEvent,
 } from "@/lib/bank-reconciliation/stream-events";
-import { updateReconDecisionWithRetry } from "@/lib/bank-reconciliation/update-recon-decision-with-retry";
+import { completeBankTransactionReconciliation } from "@/lib/bank-reconciliation/complete-bank-transaction-reconciliation";
 import { finopsDb } from "@/lib/services/finops-db";
 import { generateStructuredOutput } from "@/lib/services/ai";
 import { wf } from "@/lib/services/workflow";
@@ -693,15 +693,17 @@ async function insertReconDecision(
   return (data as { id: string }).id;
 }
 
-async function updateBankTransactionInAcumatica(
+async function completeAutoReconcile(
   organizationId: string,
   bankTxn: ParsedBankTransaction,
-  decision: EnrichedAIDecision
+  decision: EnrichedAIDecision,
+  decisionId: string
 ): Promise<void> {
   "use step";
   const startTime = Date.now();
-  wf.log(WORKFLOW_NAME, "Updating bank transaction in Acumatica", {
+  wf.log(WORKFLOW_NAME, "Completing auto reconcile", {
     tranId: bankTxn.tranId,
+    decisionId,
     matchedCandidate: decision.matched_candidate_id,
   });
 
@@ -731,47 +733,23 @@ async function updateBankTransactionInAcumatica(
   };
 
   const client = createAcumaticaClient();
-  await client.updateBankTransactionMatch({ organizationId, matchPayload });
+  await completeBankTransactionReconciliation({
+    decisionId,
+    organizationId,
+    client,
+    matchPayload,
+    decisionUpdates: {
+      final_doc_type: decision.matched_source_type || undefined,
+      final_ref_nbr: decision.matched_reference_nbr || undefined,
+    },
+  });
 
   const durationMs = Date.now() - startTime;
-  wf.log(WORKFLOW_NAME, "Bank transaction updated in Acumatica", {
+  wf.log(WORKFLOW_NAME, "Auto reconcile completed", {
+    decisionId,
     extRefNbr: bankTxn.extRefNbr,
     module,
     matchType,
-    durationMs,
-  });
-}
-
-async function updateReconDecisionStatus(
-  decisionId: string,
-  decision: EnrichedAIDecision
-): Promise<void> {
-  "use step";
-  const startTime = Date.now();
-  wf.log(WORKFLOW_NAME, "Updating recon decision status to completed", {
-    decisionId,
-  });
-
-  try {
-    await updateReconDecisionWithRetry(decisionId, {
-      status: RECON_DECISION_STATUS.COMPLETED,
-      final_doc_type: decision.matched_source_type || undefined,
-      final_ref_nbr: decision.matched_reference_nbr || undefined,
-    });
-  } catch (error) {
-    const durationMs = Date.now() - startTime;
-    wf.log(WORKFLOW_NAME, "Failed to update recon decision status", {
-      decisionId,
-      error: error instanceof Error ? error.message : String(error),
-      durationMs,
-    });
-    throw error;
-  }
-
-  const durationMs = Date.now() - startTime;
-
-  wf.log(WORKFLOW_NAME, "Recon decision status updated", {
-    decisionId,
     durationMs,
   });
 }
@@ -889,8 +867,7 @@ export async function runBankReconciliation(
       const decisionId = await insertReconDecision(txnOrgId, decision, txn);
 
       if (decision.suggested_action === SUGGESTED_ACTIONS.AUTO_RECONCILE) {
-        await updateBankTransactionInAcumatica(txnOrgId, txn, decision);
-        await updateReconDecisionStatus(decisionId, decision);
+        await completeAutoReconcile(txnOrgId, txn, decision, decisionId);
 
         autoReconciledCount++;
       } else if (decision.suggested_action === SUGGESTED_ACTIONS.MANUAL_REVIEW) {
