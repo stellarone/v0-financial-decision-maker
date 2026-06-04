@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache"
 import {
-  CANDIDATE_SOURCE_TYPES,
   RECON_DECISION_STATUS,
   SUGGESTED_ACTIONS,
 } from "@/data/constants/bank-reconciliation"
@@ -17,6 +16,8 @@ import {
   buildArInvoicePayload,
   extractCounterpartyFromGpt,
 } from "@/lib/bank-reconciliation/build-create-entry-payload"
+import { resolveMatchModuleFields } from "@/lib/bank-reconciliation/resolve-match-module-fields"
+import { updateReconDecisionWithRetry } from "@/lib/bank-reconciliation/update-recon-decision-with-retry"
 import { createAcumaticaClient } from "@/lib/clients/acumatica"
 import { withActionAuth } from "@/lib/services/app/auth/with-action-auth"
 import { finopsDb } from "@/lib/services/finops-db"
@@ -65,34 +66,13 @@ export const matchDecision = withActionAuth(
       throw new Error("Decision does not have a matched candidate to reconcile with")
     }
 
-    let module = ""
-    let matchType = ""
-    let businessAccount = ""
-
-    if (matchedSourceType === CANDIDATE_SOURCE_TYPES.AP_BILL) {
-      module = "AP"
-      matchType = "Bill"
-      businessAccount = (matchedCandidate?.vendor as string) || ""
-    } else if (matchedSourceType === CANDIDATE_SOURCE_TYPES.AP_PAYMENT) {
-      module = "AP"
-      matchType = "Check"
-      businessAccount = (matchedCandidate?.vendor as string) || ""
-    } else if (matchedSourceType === CANDIDATE_SOURCE_TYPES.AR_INVOICE) {
-      module = "AR"
-      matchType = "Invoice"
-      businessAccount = (matchedCandidate?.customer as string) || ""
-    } else if (matchedSourceType === CANDIDATE_SOURCE_TYPES.AR_PAYMENT) {
-      module = "AR"
-      matchType = "Payment"
-      businessAccount = (matchedCandidate?.customer as string) || ""
-    } else if (matchedSourceType === CANDIDATE_SOURCE_TYPES.CASH_TRANSACTION) {
-      module = "CA"
-      matchType = "Transaction"
-      businessAccount =
-        (matchedCandidate?.vendor as string) ||
-        (matchedCandidate?.customer as string) ||
-        ""
-    }
+    const { module, matchType, businessAccount } = resolveMatchModuleFields(
+      matchedSourceType,
+      {
+        vendor: matchedCandidate?.vendor as string | undefined,
+        customer: matchedCandidate?.customer as string | undefined,
+      }
+    )
 
     const matchPayload = {
       CashAccount: { value: (bankTransaction.cashAccount as string) || "1000" },
@@ -119,17 +99,13 @@ export const matchDecision = withActionAuth(
       matchPayload,
     })
 
-    const { error: updateError } = await finopsDb.updateReconDecision(decisionId, {
+    await updateReconDecisionWithRetry(decisionId, {
       status: RECON_DECISION_STATUS.COMPLETED,
       final_doc_type: matchedSourceType || undefined,
       final_ref_nbr: matchedRefNbr || undefined,
       reviewed_by: ctx.profile.email || ctx.profile.id,
       reviewed_at: new Date().toISOString(),
     })
-
-    if (updateError) {
-      throw new Error("Failed to update decision status after matching")
-    }
 
     revalidatePath("/bank-reconciliation")
     return { decisionId, status: "completed" }
@@ -234,17 +210,13 @@ export const createEntryDecision = withActionAuth(
       refNbr = acumaticaReferenceNbr(result)
     }
 
-    const { error: updateError } = await finopsDb.updateReconDecision(decisionId, {
+    await updateReconDecisionWithRetry(decisionId, {
       status: RECON_DECISION_STATUS.COMPLETED,
       final_doc_type: docType,
       final_ref_nbr: refNbr || undefined,
       reviewed_by: ctx.profile.email || ctx.profile.id,
       reviewed_at: new Date().toISOString(),
     })
-
-    if (updateError) {
-      throw new Error("Failed to update decision status after creating entry")
-    }
 
     revalidatePath("/bank-reconciliation")
     return { decisionId, docType, refNbr, status: "completed" }

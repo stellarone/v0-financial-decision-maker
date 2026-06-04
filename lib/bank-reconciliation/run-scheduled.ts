@@ -5,6 +5,7 @@ import {
   resolveWorkflowRunId,
   type WorkflowRunHandle,
 } from "@/lib/bank-reconciliation/stream-response";
+import { registerBankReconWorkflowRun } from "@/lib/bank-reconciliation/workflow-run-org";
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -53,6 +54,7 @@ export async function runBankReconciliationForOrganizations(
       prepared.input,
     ])) as WorkflowRunHandle;
     const runId = resolveWorkflowRunId(run);
+    registerBankReconWorkflowRun(runId, organizationId);
     runIds.push(runId);
 
     summaries.push({

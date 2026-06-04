@@ -12,6 +12,7 @@ import {
   resolveWorkflowRunId,
   type WorkflowRunHandle,
 } from "@/lib/bank-reconciliation/stream-response";
+import { registerBankReconWorkflowRun } from "@/lib/bank-reconciliation/workflow-run-org";
 import { tryOrgAuth } from "@/lib/services/app/auth/guards";
 import { runBankReconciliation } from "@/lib/workflows/bank-reconciliation";
 
@@ -54,6 +55,7 @@ export async function POST() {
     ])) as WorkflowRunHandle;
 
     const runId = resolveWorkflowRunId(run);
+    registerBankReconWorkflowRun(runId, organizationId);
     void run.returnValue.catch(() => {
       // Prevent unhandled rejections when the client disconnects early.
     });

@@ -374,6 +374,16 @@ export async function pollWorkflowRunStream(
     await sleep(intervalMs, signal);
   }
 
+  if (state.phase === "running") {
+    state = {
+      ...state,
+      phase: "error",
+      error: "Reconciliation stream timed out before completion",
+      currentMessage: "Reconciliation stream timed out before completion",
+    };
+    onUpdate(state);
+  }
+
   return state;
 }
 

@@ -6,6 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { getRun } from "workflow/api";
+import { getBankReconWorkflowRunOrganization } from "@/lib/bank-reconciliation/workflow-run-org";
 import { tryOrgAuth } from "@/lib/services/app/auth/guards";
 
 export const dynamic = "force-dynamic";
@@ -40,6 +41,11 @@ export async function GET(request: Request) {
     (startIndex === undefined || Number.isNaN(startIndex) || startIndex < 0)
   ) {
     return NextResponse.json({ error: "Invalid startIndex" }, { status: 400 });
+  }
+
+  const runOrganizationId = getBankReconWorkflowRunOrganization(runId);
+  if (runOrganizationId !== auth.organization.id) {
+    return NextResponse.json({ error: "Run not found" }, { status: 404 });
   }
 
   try {

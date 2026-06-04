@@ -11,11 +11,13 @@
 
 import { getWritable } from "workflow";
 import { createAcumaticaClient } from "@/lib/clients/acumatica";
+import { resolveMatchModuleFields } from "@/lib/bank-reconciliation/resolve-match-module-fields";
 import {
   writeProgressEvent,
   writeResultEvent,
   writeStepCompleteEvent,
 } from "@/lib/bank-reconciliation/stream-events";
+import { updateReconDecisionWithRetry } from "@/lib/bank-reconciliation/update-recon-decision-with-retry";
 import { finopsDb } from "@/lib/services/finops-db";
 import { generateStructuredOutput } from "@/lib/services/ai";
 import { wf } from "@/lib/services/workflow";
@@ -652,34 +654,11 @@ async function updateBankTransactionInAcumatica(
     throw new Error("No matched candidate found for auto_reconcile");
   }
 
-  // Determine module and match type based on source_type
-  let module = "";
-  let matchType = "";
-  let businessAccount = "";
-
   const docType = matchedCandidate.source_type;
-
-  if (docType === CANDIDATE_SOURCE_TYPES.AP_BILL) {
-    module = "AP";
-    matchType = "Bill";
-    businessAccount = matchedCandidate.vendor || "";
-  } else if (docType === CANDIDATE_SOURCE_TYPES.AP_PAYMENT) {
-    module = "AP";
-    matchType = "Check";
-    businessAccount = matchedCandidate.vendor || "";
-  } else if (docType === CANDIDATE_SOURCE_TYPES.AR_INVOICE) {
-    module = "AR";
-    matchType = "Invoice";
-    businessAccount = matchedCandidate.customer || "";
-  } else if (docType === CANDIDATE_SOURCE_TYPES.AR_PAYMENT) {
-    module = "AR";
-    matchType = "Payment";
-    businessAccount = matchedCandidate.customer || "";
-  } else if (docType === CANDIDATE_SOURCE_TYPES.CASH_TRANSACTION) {
-    module = "CA";
-    matchType = "Transaction";
-    businessAccount = matchedCandidate.vendor || matchedCandidate.customer || "";
-  }
+  const { module, matchType, businessAccount } = resolveMatchModuleFields(
+    docType,
+    matchedCandidate
+  );
 
   const matchPayload = {
     CashAccount: { value: bankTxn.cashAccount || "1000" },
@@ -717,24 +696,23 @@ async function updateReconDecisionStatus(
     decisionId,
   });
 
-  const { data, error } = await finopsDb.updateReconDecision(decisionId, {
-    status: RECON_DECISION_STATUS.COMPLETED,
-    final_doc_type: decision.matched_source_type || undefined,
-    final_ref_nbr: decision.matched_reference_nbr || undefined,
-  });
-
-  const durationMs = Date.now() - startTime;
-
-  if (error || !data) {
+  try {
+    await updateReconDecisionWithRetry(decisionId, {
+      status: RECON_DECISION_STATUS.COMPLETED,
+      final_doc_type: decision.matched_source_type || undefined,
+      final_ref_nbr: decision.matched_reference_nbr || undefined,
+    });
+  } catch (error) {
+    const durationMs = Date.now() - startTime;
     wf.log(WORKFLOW_NAME, "Failed to update recon decision status", {
       decisionId,
       error: error instanceof Error ? error.message : String(error),
       durationMs,
     });
-    throw new Error(
-      `Failed to update recon decision status: ${error instanceof Error ? error.message : String(error)}`
-    );
+    throw error;
   }
+
+  const durationMs = Date.now() - startTime;
 
   wf.log(WORKFLOW_NAME, "Recon decision status updated", {
     decisionId,
