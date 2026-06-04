@@ -4,7 +4,33 @@ import {
   acumaticaReferenceNbr,
   buildApBillPayload,
   extractCounterpartyFromGpt,
+  resolveBankTransactionDrCr,
 } from "./build-create-entry-payload.ts";
+
+describe("resolveBankTransactionDrCr", () => {
+  it("accepts canonical drCr values", () => {
+    assert.equal(resolveBankTransactionDrCr({ drCr: "Receipt" }), "Receipt");
+    assert.equal(
+      resolveBankTransactionDrCr({ drCr: "Disbursement" }),
+      "Disbursement"
+    );
+  });
+
+  it("falls back to DrCr when drCr is absent", () => {
+    assert.equal(resolveBankTransactionDrCr({ DrCr: "Receipt" }), "Receipt");
+  });
+
+  it("rejects missing or unexpected drCr values", () => {
+    assert.throws(
+      () => resolveBankTransactionDrCr({}),
+      /Cannot determine whether this bank transaction is a receipt or disbursement/
+    );
+    assert.throws(
+      () => resolveBankTransactionDrCr({ drCr: "disbursement" }),
+      /Cannot determine whether this bank transaction is a receipt or disbursement/
+    );
+  });
+});
 
 describe("extractCounterpartyFromGpt", () => {
   it("reads vendor and customer from matched_candidate", () => {

@@ -10,6 +10,20 @@ function unwrapString(field: unknown): string | undefined {
   return undefined;
 }
 
+export type BankTransactionDrCr = "Receipt" | "Disbursement";
+
+export function resolveBankTransactionDrCr(
+  bankTransaction: Record<string, unknown>
+): BankTransactionDrCr {
+  const raw = bankTransaction.drCr ?? bankTransaction.DrCr;
+  if (raw === "Receipt" || raw === "Disbursement") {
+    return raw;
+  }
+  throw new Error(
+    `Cannot determine whether this bank transaction is a receipt or disbursement (drCr: ${String(raw)}). Run reconciliation again or use Match.`
+  );
+}
+
 export function extractCounterpartyFromGpt(
   gptResponse: Record<string, unknown> | null
 ): { vendor?: string; customer?: string } {

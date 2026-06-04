@@ -15,6 +15,7 @@ import {
   buildApBillPayload,
   buildArInvoicePayload,
   extractCounterpartyFromGpt,
+  resolveBankTransactionDrCr,
 } from "@/lib/bank-reconciliation/build-create-entry-payload"
 import { resolveMatchModuleFields } from "@/lib/bank-reconciliation/resolve-match-module-fields"
 import { updateReconDecisionWithRetry } from "@/lib/bank-reconciliation/update-recon-decision-with-retry"
@@ -144,7 +145,7 @@ export const createEntryDecision = withActionAuth(
       throw new Error("No bank transaction data found on this decision")
     }
 
-    const drCr = bankTransaction.drCr as string | undefined
+    const drCr = resolveBankTransactionDrCr(bankTransaction)
     const amount = row.amount
     const description =
       row.description || (bankTransaction.description as string) || ""
@@ -190,7 +191,7 @@ export const createEntryDecision = withActionAuth(
       })
       docType = "APBill"
       refNbr = acumaticaReferenceNbr(result)
-    } else {
+    } else if (drCr === "Receipt") {
       if (!customer) {
         throw new Error(
           "Cannot create an AR Invoice without a customer. Run reconciliation again or use Match when a customer candidate is available."
