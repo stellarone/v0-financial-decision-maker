@@ -211,6 +211,34 @@ export const createEntryDecision = withActionAuth(
       refNbr = acumaticaReferenceNbr(result)
     }
 
+    if (!refNbr) {
+      throw new Error(
+        "Created document did not return a reference number; cannot match bank transaction in Acumatica"
+      )
+    }
+
+    const { module, matchType, businessAccount } = resolveMatchModuleFields(
+      docType,
+      { vendor, customer }
+    )
+
+    await client.updateBankTransactionMatch({
+      organizationId,
+      matchPayload: {
+        CashAccount: { value: (bankTransaction.cashAccount as string) || "1000" },
+        ExtRefNbr: { value: (bankTransaction.extRefNbr as string) || "" },
+        MatchDetails: [
+          {
+            Matched: { value: true },
+            Module: { value: module },
+            MatchType: { value: matchType },
+            InvoiceNbr: { value: refNbr },
+            BusinessAccount: { value: businessAccount },
+          },
+        ],
+      },
+    })
+
     await updateReconDecisionWithRetry(decisionId, {
       status: RECON_DECISION_STATUS.COMPLETED,
       final_doc_type: docType,
