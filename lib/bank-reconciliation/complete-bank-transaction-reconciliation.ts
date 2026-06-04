@@ -13,7 +13,8 @@ type ReconDecisionCompletionUpdates = {
 /**
  * Persist recon decision completion before writing the match to Acumatica so a
  * FinOps failure cannot leave ERP reconciled while the UI still shows pending.
- * Rolls the decision back to pending if the ERP write fails.
+ * Rolls the decision back to pending if the ERP write fails, or marks it failed
+ * when that rollback cannot be persisted.
  */
 export async function completeBankTransactionReconciliation(options: {
   decisionId: string;
@@ -38,10 +39,16 @@ export async function completeBankTransactionReconciliation(options: {
         status: RECON_DECISION_STATUS.PENDING,
       });
     } catch (rollbackError) {
-      console.error(
-        "[completeBankTransactionReconciliation] Failed to roll back decision after Acumatica error:",
-        rollbackError
-      );
+      try {
+        await updateReconDecisionWithRetry(decisionId, {
+          status: RECON_DECISION_STATUS.FAILED,
+        });
+      } catch (markFailedError) {
+        console.error(
+          "[completeBankTransactionReconciliation] Failed to revert decision after Acumatica error:",
+          { rollbackError, markFailedError }
+        );
+      }
     }
     throw error;
   }
