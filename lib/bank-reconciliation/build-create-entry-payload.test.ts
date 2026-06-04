@@ -5,6 +5,7 @@ import {
   buildApBillPayload,
   extractCounterpartyFromGpt,
   resolveBankTransactionDrCr,
+  resolveMatchedReferenceNbr,
 } from "./build-create-entry-payload.ts";
 
 describe("resolveBankTransactionDrCr", () => {
@@ -40,6 +41,32 @@ describe("extractCounterpartyFromGpt", () => {
       }),
       { vendor: "MCDONALDS", customer: "UNITEDAIR" }
     );
+  });
+});
+
+describe("resolveMatchedReferenceNbr", () => {
+  it("prefers matched_candidate.reference_nbr over top-level field", () => {
+    assert.equal(
+      resolveMatchedReferenceNbr({
+        matched_reference_nbr: "WRONG",
+        matched_candidate: { reference_nbr: "000123" },
+      }),
+      "000123"
+    );
+  });
+
+  it("falls back to matched_reference_nbr when candidate ref is empty", () => {
+    assert.equal(
+      resolveMatchedReferenceNbr({
+        matched_reference_nbr: "000456",
+        matched_candidate: { reference_nbr: "" },
+      }),
+      "000456"
+    );
+  });
+
+  it("returns null when both are missing", () => {
+    assert.equal(resolveMatchedReferenceNbr({ matched_candidate: {} }), null);
   });
 });
 

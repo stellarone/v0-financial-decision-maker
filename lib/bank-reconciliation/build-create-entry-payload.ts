@@ -37,6 +37,22 @@ export function extractCounterpartyFromGpt(
   };
 }
 
+/** Prefer matched_candidate.reference_nbr (auto-match path), then matched_reference_nbr. */
+export function resolveMatchedReferenceNbr(
+  gptResponse: Record<string, unknown> | null
+): string | null {
+  const candidate = gptResponse?.matched_candidate as Record<string, unknown> | undefined;
+  const fromCandidate = candidate?.reference_nbr;
+  if (typeof fromCandidate === "string" && fromCandidate) {
+    return fromCandidate;
+  }
+  const fromTopLevel = gptResponse?.matched_reference_nbr;
+  if (typeof fromTopLevel === "string" && fromTopLevel) {
+    return fromTopLevel;
+  }
+  return null;
+}
+
 export function dueDateFromTranDate(tranDate: string, days = 30): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(tranDate);
   if (match) {

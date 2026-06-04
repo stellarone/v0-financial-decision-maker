@@ -16,6 +16,7 @@ import {
   buildArInvoicePayload,
   extractCounterpartyFromGpt,
   resolveBankTransactionDrCr,
+  resolveMatchedReferenceNbr,
 } from "@/lib/bank-reconciliation/build-create-entry-payload"
 import { resolveMatchModuleFields } from "@/lib/bank-reconciliation/resolve-match-module-fields"
 import { updateReconDecisionWithRetry } from "@/lib/bank-reconciliation/update-recon-decision-with-retry"
@@ -57,7 +58,7 @@ export const matchDecision = withActionAuth(
     }
 
     const matchedSourceType = gptResponse?.matched_source_type as string | null
-    const matchedRefNbr = gptResponse?.matched_reference_nbr as string | null
+    const matchedRefNbr = resolveMatchedReferenceNbr(gptResponse)
     const matchedCandidate = gptResponse?.matched_candidate as Record<
       string,
       unknown
