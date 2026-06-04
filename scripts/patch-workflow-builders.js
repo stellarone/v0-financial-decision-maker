@@ -1,22 +1,49 @@
 import { existsSync } from "node:fs";
-import { readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { readFile, writeFile, realpath } from "node:fs/promises";
+import { join, sep } from "node:path";
 
-const targetPath = join(
+const packageRoot = join(
   process.cwd(),
   "node_modules",
   "@workflow",
-  "builders",
-  "dist",
-  "base-builder.js"
+  "builders"
 );
+const targetRelative = join("dist", "base-builder.js");
+const targetPath = join(packageRoot, targetRelative);
 
-if (!existsSync(targetPath)) {
+function isPathInsideRoot(rootReal, targetReal) {
+  if (rootReal === targetReal) {
+    return true;
+  }
+  const prefix = rootReal.endsWith(sep) ? rootReal : `${rootReal}${sep}`;
+  return targetReal.startsWith(prefix);
+}
+
+async function resolveContainedTargetPath() {
+  if (!existsSync(packageRoot) || !existsSync(targetPath)) {
+    return null;
+  }
+
+  const rootReal = await realpath(packageRoot);
+  const targetReal = await realpath(targetPath);
+
+  if (!isPathInsideRoot(rootReal, targetReal)) {
+    console.error(
+      `[workflow-patch] Refusing to patch ${targetPath}: resolves outside ${packageRoot}.`
+    );
+    process.exit(1);
+  }
+
+  return targetReal;
+}
+
+const resolvedTargetPath = await resolveContainedTargetPath();
+if (!resolvedTargetPath) {
   console.log(`[workflow-patch] Skipping: ${targetPath} not found.`);
   process.exit(0);
 }
 
-const content = await readFile(targetPath, "utf8");
+const content = await readFile(resolvedTargetPath, "utf8");
 
 if (content.includes("renameWithRetry")) {
   console.log("[workflow-patch] Already applied.");
@@ -67,5 +94,5 @@ const nextContent = content
   .replace(marker, `${marker}\n${helperBlock}`)
   .replace(renameTarget, "await renameWithRetry(tempPath, outfile);");
 
-await writeFile(targetPath, nextContent, "utf8");
+await writeFile(resolvedTargetPath, nextContent, "utf8");
 console.log("[workflow-patch] Applied.");
