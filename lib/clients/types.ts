@@ -124,6 +124,29 @@ export interface AcumaticaCashSummary {
   [field: string]: unknown;
 }
 
+export interface AcumaticaUnprocessedBankTransaction {
+  ID?: AcumaticaValue<number | string> | number | string;
+  TranDate?: AcumaticaValue<string> | string;
+  TranDesc?: AcumaticaValue<string> | string;
+  CuryTranAmt?: AcumaticaValue<number | string> | number | string;
+  DrCr?: AcumaticaValue<string> | string;
+  EntryTypeID?: AcumaticaValue<string> | string;
+  ExtRefNbr?: AcumaticaValue<string> | string;
+  Processed?: AcumaticaValue<boolean | string> | boolean | string;
+  CashAccount?: AcumaticaValue<string> | string;
+  OrganizationID?: AcumaticaValue<string> | string;
+  AccountID?: AcumaticaValue<string> | string;
+  Matched?: AcumaticaValue<boolean | string> | boolean | string;
+  Hidden?: AcumaticaValue<boolean | string> | boolean | string;
+  Amount?: AcumaticaValue<number | string> | number | string;
+  Date?: AcumaticaValue<string> | string;
+  Description?: AcumaticaValue<string> | string;
+  ExternalRef?: AcumaticaValue<string> | string;
+  id?: AcumaticaValue<number | string> | number | string;
+  TranID?: AcumaticaValue<number | string> | number | string;
+  [field: string]: unknown;
+}
+
 export interface AcumaticaARInvoice {
   Type?: AcumaticaValue<string>;
   ReferenceNbr?: AcumaticaValue<string>;

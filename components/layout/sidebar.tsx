@@ -53,7 +53,11 @@ const navSections: NavSection[] = [
   {
     label: "Intelligence",
     items: [
-      { label: "AI Reconciliation", href: "#", icon: Box },
+      {
+        label: "Bank Reconciliation",
+        href: "/bank-reconciliation",
+        icon: Box,
+      },
       { label: "Anomalies", href: "#", icon: AlertTriangle },
     ],
   },

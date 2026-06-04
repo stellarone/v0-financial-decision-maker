@@ -1,0 +1,1 @@
+export { generateStructuredOutput } from "./gateway";
