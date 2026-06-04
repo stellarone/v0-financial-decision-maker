@@ -33,6 +33,55 @@ describe("mapUnprocessedRowToInserted", () => {
     });
   });
 
+  it("infers Disbursement from a negative amount when DrCr is omitted", () => {
+    const inserted = mapUnprocessedRowToInserted(
+      {
+        ID: 43,
+        TranDate: "2026-06-01",
+        TranDesc: "Vendor payment",
+        CuryTranAmt: -100,
+        ExtRefNbr: "pay-1",
+        Processed: false,
+        Matched: false,
+        Hidden: false,
+        CashAccount: "1000",
+        AccountID: "PLATINUM",
+      },
+      orgId,
+      "Platinum"
+    );
+
+    expect(inserted).toMatchObject({
+      ID: 43,
+      DrCr: "Disbursement",
+      CuryTranAmt: -100,
+    });
+  });
+
+  it("infers Receipt from a positive amount when DrCr is omitted", () => {
+    const inserted = mapUnprocessedRowToInserted(
+      {
+        ID: 44,
+        TranDate: "2026-06-01",
+        TranDesc: "Customer deposit",
+        CuryTranAmt: 250,
+        Processed: false,
+        Matched: false,
+        Hidden: false,
+        CashAccount: "1000",
+        AccountID: "PLATINUM",
+      },
+      orgId,
+      "Platinum"
+    );
+
+    expect(inserted).toMatchObject({
+      ID: 44,
+      DrCr: "Receipt",
+      CuryTranAmt: 250,
+    });
+  });
+
   it("drops rows for other Acumatica companies on shared template tenants", () => {
     expect(
       mapUnprocessedRowToInserted(

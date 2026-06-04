@@ -36,8 +36,13 @@ function unwrapBoolean(field: unknown): boolean {
   return String(value).toLowerCase() === "true";
 }
 
-function normalizeDrCr(value: string | null): "Receipt" | "Disbursement" {
-  if (!value) return "Receipt";
+function normalizeDrCr(
+  value: string | null,
+  amount: number
+): "Receipt" | "Disbursement" {
+  if (!value) {
+    return amount < 0 ? "Disbursement" : "Receipt";
+  }
   const normalized = value.toLowerCase();
   if (normalized.includes("disburse") || normalized === "dr") {
     return "Disbursement";
@@ -99,7 +104,7 @@ export function mapUnprocessedRowToInserted(
   const description =
     unwrapString(row.TranDesc) ?? unwrapString(row.Description) ?? "";
   const amount = unwrapNumber(row.CuryTranAmt ?? row.Amount);
-  const drCr = normalizeDrCr(unwrapString(row.DrCr));
+  const drCr = normalizeDrCr(unwrapString(row.DrCr), amount);
   const cashAccount =
     (unwrapString(row.CashAccount) ?? "1000").trim() || "1000";
 
