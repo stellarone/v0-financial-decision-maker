@@ -241,6 +241,20 @@ async function fetchAllCandidates(
     52
   );
 
+  await writeProgressEvent(
+    BANK_RECON_STEPS.FETCH_CASH_TRANSACTIONS,
+    "Fetching cash transactions…",
+    54
+  );
+  const cashTransactions = await client.getCashTransactionsForRecon({
+    organizationId,
+  });
+  await writeProgressEvent(
+    BANK_RECON_STEPS.FETCH_CASH_TRANSACTIONS,
+    `Loaded ${cashTransactions.length} cash transaction groups`,
+    58
+  );
+
   const allCandidates: ReconciliationCandidate[] = [];
 
   // Normalize AP Bills
@@ -274,6 +288,18 @@ async function fetchAllCandidates(
       allCandidates.push(normalizeCandidate(CANDIDATE_SOURCE_TYPES.AR_PAYMENT, record));
     }
   }
+
+  // Normalize Cash Transactions
+  for (const item of cashTransactions as Array<{
+    CashTransactionsDetails?: unknown[];
+  }>) {
+    const details = item.CashTransactionsDetails || [];
+    for (const record of details as Array<Record<string, unknown>>) {
+      allCandidates.push(
+        normalizeCandidate(CANDIDATE_SOURCE_TYPES.CASH_TRANSACTION, record)
+      );
+    }
+  }
   const durationMs = Date.now() - startTime;
   wf.log(WORKFLOW_NAME, "Candidates fetched", {
     total: allCandidates.length,
@@ -281,6 +307,7 @@ async function fetchAllCandidates(
     apPayments: apPayments.length,
     arInvoices: arInvoices.length,
     arPayments: arPayments.length,
+    cashTransactions: cashTransactions.length,
     durationMs,
   });
 
@@ -536,8 +563,9 @@ DATE MATCHING:
 - >14 days = Flag for review
 
 TRANSACTION TYPE ALIGNMENT (CRITICAL):
-- Bank OUTFLOW (Disbursement) → AP Bills, AP Payments
-- Bank INFLOW (Receipt) → AR Invoices, AR Payments
+- Bank OUTFLOW (Disbursement) → AP Bills, AP Payments, Cash Transactions (disbursements)
+- Bank INFLOW (Receipt) → AR Invoices, AR Payments, Cash Transactions (receipts)
+- Transfers, bank fees, and cash adjustments → CashTransaction when no AP/AR match fits
 
 === DECISION MATRIX ===
 
@@ -566,7 +594,7 @@ Respond with ONLY valid JSON:
 
 {
   "matched_candidate_id": "exact id from candidate list or null if no match",
-  "matched_source_type": "APBill|APPayment|ARInvoice|ARPayment|null",
+  "matched_source_type": "APBill|APPayment|ARInvoice|ARPayment|CashTransaction|null",
   "matched_reference_nbr": "reference number from matched candidate or null",
   "confidence_score": 0.00,
   "reasoning": "2-3 sentences explaining your match decision",
