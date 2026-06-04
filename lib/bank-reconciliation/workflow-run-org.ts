@@ -1,26 +1,30 @@
-const globalKey = "__bankReconWorkflowRunOrgs" as const;
+import { createHmac, timingSafeEqual } from "crypto";
 
-type GlobalWithRegistry = typeof globalThis & {
-  [globalKey]?: Map<string, string>;
-};
-
-function getRegistry(): Map<string, string> {
-  const g = globalThis as GlobalWithRegistry;
-  if (!g[globalKey]) {
-    g[globalKey] = new Map();
+function getStreamSigningSecret(): string {
+  const secret = process.env.CRON_SECRET;
+  if (!secret) {
+    throw new Error("CRON_SECRET is required to authorize workflow streams");
   }
-  return g[globalKey]!;
+  return secret;
 }
 
-export function registerBankReconWorkflowRun(
+export function createBankReconWorkflowStreamToken(
   runId: string,
   organizationId: string
-): void {
-  getRegistry().set(runId, organizationId);
+): string {
+  return createHmac("sha256", getStreamSigningSecret())
+    .update(`${runId}:${organizationId}`)
+    .digest("base64url");
 }
 
-export function getBankReconWorkflowRunOrganization(
-  runId: string
-): string | undefined {
-  return getRegistry().get(runId);
+export function verifyBankReconWorkflowStreamToken(
+  runId: string,
+  organizationId: string,
+  token: string
+): boolean {
+  const expected = createBankReconWorkflowStreamToken(runId, organizationId);
+  if (expected.length !== token.length) {
+    return false;
+  }
+  return timingSafeEqual(Buffer.from(expected), Buffer.from(token));
 }

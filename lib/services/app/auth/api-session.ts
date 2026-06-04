@@ -41,11 +41,10 @@ export async function userHasOrganizationAccess(
   const supabase = createServiceRoleSupabaseClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("organization_id, is_employee")
+    .select("organization_id")
     .eq("id", userId)
-    .maybeSingle<{ organization_id: string | null; is_employee: boolean | null }>();
+    .maybeSingle<{ organization_id: string | null }>();
 
   if (!profile) return false;
-  if (profile.organization_id === organizationId) return true;
-  return profile.is_employee === true;
+  return profile.organization_id === organizationId;
 }

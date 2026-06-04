@@ -296,6 +296,7 @@ export async function consumeWorkflowNdjsonStream(
 export async function pollWorkflowRunStream(
   runId: string,
   options: {
+    streamToken: string;
     onUpdate: (state: BankReconStreamState) => void;
     initial: BankReconStreamState;
     startIndex?: number;
@@ -304,6 +305,7 @@ export async function pollWorkflowRunStream(
   }
 ): Promise<BankReconStreamState> {
   const {
+    streamToken,
     onUpdate,
     initial,
     startIndex = 0,
@@ -324,6 +326,7 @@ export async function pollWorkflowRunStream(
       window.location.origin
     );
     url.searchParams.set("runId", runId);
+    url.searchParams.set("streamToken", streamToken);
     if (nextChunkIndex > 0) {
       url.searchParams.set("startIndex", String(nextChunkIndex));
     }

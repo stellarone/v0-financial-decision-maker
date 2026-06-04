@@ -420,7 +420,7 @@ async function runAIDecision(
     durationMs,
   });
 
-  return {
+  const enriched: EnrichedAIDecision = {
     ...decision,
     bank_transaction: bankTxn,
     matched_candidate: matchedCandidate,
@@ -429,6 +429,20 @@ async function runAIDecision(
     llm_tokens_used: 0,
     llm_cost_estimate: 0,
   };
+
+  if (
+    enriched.suggested_action === SUGGESTED_ACTIONS.AUTO_RECONCILE &&
+    !enriched.matched_candidate
+  ) {
+    enriched.suggested_action = SUGGESTED_ACTIONS.MANUAL_REVIEW;
+    enriched.flag_for_review = true;
+    enriched.flag_reasons = [
+      ...(enriched.flag_reasons ?? []),
+      "auto_reconcile requires a matched candidate",
+    ];
+  }
+
+  return enriched;
 }
 
 function getDefaultDecision(reason: string): AIDecisionResponse {

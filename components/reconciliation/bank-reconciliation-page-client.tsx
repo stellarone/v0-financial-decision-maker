@@ -525,21 +525,23 @@ export function BankReconciliationPageClient({
 
       const body = (await res.json()) as {
         runId?: string
+        streamToken?: string
         transactionCount?: number
       }
       const runId =
         body.runId ?? res.headers.get("X-Workflow-Run-Id") ?? null
+      const streamToken = body.streamToken ?? null
       const transactionCount =
         typeof body.transactionCount === "number"
           ? body.transactionCount
           : null
 
-      if (!runId) {
+      if (!runId || !streamToken) {
         setStreamState({
           ...initialRunning,
           phase: "error",
-          error: "Workflow started without a run id",
-          currentMessage: "Workflow started without a run id",
+          error: "Workflow started without stream credentials",
+          currentMessage: "Workflow started without stream credentials",
         })
         return
       }
@@ -555,6 +557,7 @@ export function BankReconciliationPageClient({
       setStreamState(pollingState)
 
       const final = await pollWorkflowRunStream(runId, {
+        streamToken,
         initial: pollingState,
         onUpdate: setStreamState,
         intervalMs: 2000,

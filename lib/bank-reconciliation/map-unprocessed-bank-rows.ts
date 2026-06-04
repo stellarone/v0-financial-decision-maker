@@ -58,7 +58,7 @@ function accountIdMatchesCompany(
   if (!accountId || !companyId) {
     return false;
   }
-  return accountId === companyId || accountId.includes(companyId);
+  return accountId === companyId;
 }
 
 export function mapUnprocessedRowToInserted(

@@ -6,7 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { getRun } from "workflow/api";
-import { getBankReconWorkflowRunOrganization } from "@/lib/bank-reconciliation/workflow-run-org";
+import { verifyBankReconWorkflowStreamToken } from "@/lib/bank-reconciliation/workflow-run-org";
 import { tryOrgAuth } from "@/lib/services/app/auth/guards";
 
 export const dynamic = "force-dynamic";
@@ -43,8 +43,18 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Invalid startIndex" }, { status: 400 });
   }
 
-  const runOrganizationId = getBankReconWorkflowRunOrganization(runId);
-  if (runOrganizationId !== auth.organization.id) {
+  const streamToken = searchParams.get("streamToken")?.trim();
+  if (!streamToken) {
+    return NextResponse.json({ error: "streamToken is required" }, { status: 400 });
+  }
+
+  if (
+    !verifyBankReconWorkflowStreamToken(
+      runId,
+      auth.organization.id,
+      streamToken
+    )
+  ) {
     return NextResponse.json({ error: "Run not found" }, { status: 404 });
   }
 
