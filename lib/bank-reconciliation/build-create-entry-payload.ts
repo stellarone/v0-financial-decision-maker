@@ -24,14 +24,34 @@ export function extractCounterpartyFromGpt(
 }
 
 export function dueDateFromTranDate(tranDate: string, days = 30): string {
-  const base = new Date(tranDate);
-  if (Number.isNaN(base.getTime())) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(tranDate);
+  if (match) {
+    const base = new Date(
+      Number(match[1]),
+      Number(match[2]) - 1,
+      Number(match[3])
+    );
+    base.setDate(base.getDate() + days);
+    const y = base.getFullYear();
+    const m = String(base.getMonth() + 1).padStart(2, "0");
+    const d = String(base.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+
+  const parsed = new Date(tranDate);
+  if (Number.isNaN(parsed.getTime())) {
     const fallback = new Date();
     fallback.setDate(fallback.getDate() + days);
-    return fallback.toISOString().slice(0, 10);
+    const y = fallback.getFullYear();
+    const m = String(fallback.getMonth() + 1).padStart(2, "0");
+    const d = String(fallback.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
   }
-  base.setDate(base.getDate() + days);
-  return base.toISOString().slice(0, 10);
+  parsed.setDate(parsed.getDate() + days);
+  const y = parsed.getFullYear();
+  const m = String(parsed.getMonth() + 1).padStart(2, "0");
+  const d = String(parsed.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 export function acumaticaReferenceNbr(result: unknown): string | undefined {

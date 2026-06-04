@@ -359,7 +359,7 @@ export function BankReconciliationPageClient({
   const [streamState, setStreamState] = useState<BankReconStreamState>(
     INITIAL_BANK_RECON_STREAM_STATE
   )
-  const decisionBaselineRef = useRef(0)
+  const decisionBaselineIdsRef = useRef<Set<string>>(new Set())
   const streamPollAbortRef = useRef<AbortController | null>(null)
 
   const workflowActive = streamState.phase === "running" || isRunning
@@ -391,10 +391,11 @@ export function BankReconciliationPageClient({
 
   useEffect(() => {
     if (streamState.phase !== "running") return
-    setStreamState((prev) =>
-      mergeDecisionProgress(prev, decisionBaselineRef.current, decisions.length)
-    )
-  }, [decisions.length, streamState.phase])
+    const newCount = decisions.filter(
+      (d) => !decisionBaselineIdsRef.current.has(d.id)
+    ).length
+    setStreamState((prev) => mergeDecisionProgress(prev, newCount))
+  }, [decisions, streamState.phase])
 
   const handleSort = useCallback(
     (field: DecisionSortField) => {
@@ -479,7 +480,7 @@ export function BankReconciliationPageClient({
     const pollAbort = new AbortController()
     streamPollAbortRef.current = pollAbort
 
-    decisionBaselineRef.current = decisions.length
+    decisionBaselineIdsRef.current = new Set(decisions.map((d) => d.id))
     setIsRunning(true)
 
     const initialRunning: BankReconStreamState = {
@@ -583,7 +584,7 @@ export function BankReconciliationPageClient({
         streamPollAbortRef.current = null
       }
     }
-  }, [organizationId, router, decisions.length])
+  }, [organizationId, router, decisions])
 
   return (
     <div className="flex flex-col gap-5">

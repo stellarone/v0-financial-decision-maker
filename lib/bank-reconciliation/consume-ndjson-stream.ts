@@ -156,14 +156,13 @@ export function applyWorkflowStreamEvent(
  */
 export function mergeDecisionProgress(
   state: BankReconStreamState,
-  baselineDecisionCount: number,
-  currentDecisionCount: number
+  newDecisionCount: number
 ): BankReconStreamState {
   if (state.phase !== "running" || !state.transactionCount) {
     return state;
   }
 
-  const newDecisions = Math.max(0, currentDecisionCount - baselineDecisionCount);
+  const newDecisions = Math.max(0, newDecisionCount);
   if (newDecisions <= (state.processedCount ?? 0)) {
     return state;
   }
