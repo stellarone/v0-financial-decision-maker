@@ -85,7 +85,7 @@ export const CANDIDATE_SOURCE_TYPES = {
  */
 export const BANK_RECON_VERSIONS = {
   WORKFLOW_VERSION: "1.0.0",
-  PROMPT_VERSION: "2.0.0",
+  PROMPT_VERSION: "2.1.0",
 } as const;
 
 /**
