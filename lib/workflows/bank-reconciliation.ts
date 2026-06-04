@@ -828,6 +828,7 @@ export async function runBankReconciliation(
     };
     logResult(emptyResult);
     await emitResult(emptyResult);
+    await closeWorkflowStream();
     return emptyResult;
   }
 
