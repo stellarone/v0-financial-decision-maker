@@ -8,6 +8,11 @@ function getStreamSigningSecret(): string {
   return secret;
 }
 
+/** Fail fast before starting a workflow when stream auth cannot be issued. */
+export function assertBankReconWorkflowStreamSigningReady(): void {
+  getStreamSigningSecret();
+}
+
 export function createBankReconWorkflowStreamToken(
   runId: string,
   organizationId: string

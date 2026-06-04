@@ -12,7 +12,10 @@ import {
   resolveWorkflowRunId,
   type WorkflowRunHandle,
 } from "@/lib/bank-reconciliation/stream-response";
-import { createBankReconWorkflowStreamToken } from "@/lib/bank-reconciliation/workflow-run-org";
+import {
+  assertBankReconWorkflowStreamSigningReady,
+  createBankReconWorkflowStreamToken,
+} from "@/lib/bank-reconciliation/workflow-run-org";
 import { tryOrgAuth } from "@/lib/services/app/auth/guards";
 import { runBankReconciliation } from "@/lib/workflows/bank-reconciliation";
 
@@ -44,6 +47,8 @@ export async function POST() {
         { status: 404 }
       );
     }
+
+    assertBankReconWorkflowStreamSigningReady();
 
     console.log("[bank-reconciliation] Starting interactive workflow", {
       organizationId,
