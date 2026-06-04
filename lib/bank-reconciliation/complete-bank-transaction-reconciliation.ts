@@ -10,6 +10,15 @@ type ReconDecisionCompletionUpdates = {
   reviewed_at?: string;
 };
 
+/** Clears completion metadata when rolling back after an Acumatica match failure. */
+export const RECON_DECISION_COMPLETION_ROLLBACK_UPDATES = {
+  status: RECON_DECISION_STATUS.PENDING,
+  final_doc_type: null,
+  final_ref_nbr: null,
+  reviewed_by: null,
+  reviewed_at: null,
+} as const;
+
 /**
  * Persist recon decision completion before writing the match to Acumatica so a
  * FinOps failure cannot leave ERP reconciled while the UI still shows pending.
@@ -35,9 +44,10 @@ export async function completeBankTransactionReconciliation(options: {
     await client.updateBankTransactionMatch({ organizationId, matchPayload });
   } catch (error) {
     try {
-      await updateReconDecisionWithRetry(decisionId, {
-        status: RECON_DECISION_STATUS.PENDING,
-      });
+      await updateReconDecisionWithRetry(
+        decisionId,
+        RECON_DECISION_COMPLETION_ROLLBACK_UPDATES
+      );
     } catch (rollbackError) {
       try {
         await updateReconDecisionWithRetry(decisionId, {

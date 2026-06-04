@@ -75,10 +75,10 @@ class FinopsDbService {
     id: string,
     updates: {
       status?: string;
-      final_doc_type?: string;
-      final_ref_nbr?: string;
-      reviewed_by?: string;
-      reviewed_at?: string;
+      final_doc_type?: string | null;
+      final_ref_nbr?: string | null;
+      reviewed_by?: string | null;
+      reviewed_at?: string | null;
     }
   ) {
     const { data, error } = await this.getFinopsClient()
