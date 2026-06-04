@@ -75,14 +75,22 @@ async function closeWorkflowStream(): Promise<void> {
   await getWritable<string>().close();
 }
 
-function logResult(result: BankReconciliationResult): void {
-  wf.log(WORKFLOW_NAME, "Result", {
+/** Safe workflow log payload — excludes per-transaction reconciliation details. */
+function summarizeResultForLog(result: BankReconciliationResult) {
+  return {
+    organizationId: result.organizationId,
     transactionCount: result.transactionCount,
     processedCount: result.processedCount,
     autoReconciledCount: result.autoReconciledCount,
     manualReviewCount: result.manualReviewCount,
+    newEntryCount: result.newEntryCount,
     errorCount: result.errorCount,
-  });
+    timestamp: result.timestamp,
+  };
+}
+
+function logResult(result: BankReconciliationResult): void {
+  wf.log(WORKFLOW_NAME, "Result", summarizeResultForLog(result));
 }
 
 function logError(message: string, code?: string): void {
@@ -952,7 +960,7 @@ export async function runBankReconciliation(
   wf.log(WORKFLOW_NAME, "Workflow completed", {
     totalDurationMs: totalDuration,
     hasCallback: !!callbackUrl,
-    ...finalResult,
+    ...summarizeResultForLog(finalResult),
   });
 
   return finalResult;
