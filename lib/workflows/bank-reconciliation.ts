@@ -11,6 +11,7 @@
 
 import { getWritable } from "workflow";
 import { createAcumaticaClient } from "@/lib/clients/acumatica";
+import { resolveMatchedReferenceNbr } from "@/lib/bank-reconciliation/build-create-entry-payload";
 import { resolveMatchModuleFields } from "@/lib/bank-reconciliation/resolve-match-module-fields";
 import { sanitizePromptText } from "@/lib/bank-reconciliation/sanitize-prompt-text";
 import { applyAutoReconcileGuard } from "@/lib/bank-reconciliation/validate-auto-reconcile";
@@ -757,6 +758,12 @@ async function completeAutoReconcile(
     matchedCandidate
   );
 
+  const invoiceNbr =
+    resolveMatchedReferenceNbr({
+      matched_candidate: matchedCandidate,
+      matched_reference_nbr: decision.matched_reference_nbr,
+    }) || "";
+
   const matchPayload = {
     CashAccount: { value: bankTxn.cashAccount || "1000" },
     ExtRefNbr: { value: bankTxn.extRefNbr },
@@ -765,7 +772,7 @@ async function completeAutoReconcile(
         Matched: { value: true },
         Module: { value: module },
         MatchType: { value: matchType },
-        InvoiceNbr: { value: matchedCandidate.reference_nbr || "" },
+        InvoiceNbr: { value: invoiceNbr },
         BusinessAccount: { value: businessAccount },
       },
     ],
@@ -779,7 +786,7 @@ async function completeAutoReconcile(
     matchPayload,
     decisionUpdates: {
       final_doc_type: decision.matched_source_type || undefined,
-      final_ref_nbr: decision.matched_reference_nbr || undefined,
+      final_ref_nbr: invoiceNbr || undefined,
     },
   });
 
