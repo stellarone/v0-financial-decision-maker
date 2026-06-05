@@ -373,10 +373,15 @@ export async function pollWorkflowRunStream(
       idlePolls += 1;
     }
 
-    await sleep(intervalMs, signal);
+    try {
+      await sleep(intervalMs, signal);
+    } catch (err) {
+      if (signal?.aborted) break;
+      throw err;
+    }
   }
 
-  if (state.phase === "running") {
+  if (state.phase === "running" && !signal?.aborted) {
     state = {
       ...state,
       phase: "error",
