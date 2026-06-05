@@ -1,17 +1,12 @@
 import { wf } from "@/lib/services/workflow";
-
-export interface WorkflowRunHandle {
-  id?: string;
-  readable?: ReadableStream<Uint8Array> | null;
-  returnValue: Promise<unknown>;
-}
-
-export function resolveWorkflowRunId(
-  run: WorkflowRunHandle,
-  fallbackPrefix = "bank-recon"
-): string {
-  return run.id ?? `${fallbackPrefix}-${Date.now()}`;
-}
+import {
+  resolveWorkflowRunId,
+  type WorkflowRunHandle,
+} from "./workflow-run-id";
+export {
+  resolveWorkflowRunId,
+  type WorkflowRunHandle,
+} from "./workflow-run-id";
 
 /**
  * Pipe WDK workflow stream + final return value as NDJSON for the browser.

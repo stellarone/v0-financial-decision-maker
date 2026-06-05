@@ -18,6 +18,43 @@ const STREAM_HEADERS = {
   "X-Accel-Buffering": "no",
 } as const;
 
+function createErrorLine(message: string): Uint8Array {
+  return new TextEncoder().encode(
+    JSON.stringify({
+      type: "error",
+      data: { message, retryable: false },
+      timestamp: new Date().toISOString(),
+    }) + "\n"
+  );
+}
+
+function wrapWorkflowReadable(
+  readable: ReadableStream<Uint8Array>
+): ReadableStream<Uint8Array> {
+  return new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const reader = readable.getReader();
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (value) controller.enqueue(value);
+        }
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Failed to read workflow stream";
+        console.error("[bank-reconciliation] Workflow stream read failed", {
+          message,
+        });
+        controller.enqueue(createErrorLine(message));
+      } finally {
+        reader.releaseLock();
+        controller.close();
+      }
+    },
+  });
+}
+
 export async function GET(request: Request) {
   const auth = await tryOrgAuth();
   if (!auth?.organization.id) {
@@ -44,6 +81,13 @@ export async function GET(request: Request) {
 
   try {
     const run = getRun(runId);
+    if (!(await run.exists)) {
+      return NextResponse.json(
+        { error: "Workflow run not found" },
+        { status: 404 }
+      );
+    }
+
     const readable =
       startIndex !== undefined
         ? run.getReadable({ startIndex })
@@ -56,7 +100,9 @@ export async function GET(request: Request) {
       );
     }
 
-    return new Response(readable, { headers: STREAM_HEADERS });
+    return new Response(wrapWorkflowReadable(readable), {
+      headers: STREAM_HEADERS,
+    });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to read workflow stream";
