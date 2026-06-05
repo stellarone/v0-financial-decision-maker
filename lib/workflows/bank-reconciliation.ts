@@ -641,16 +641,16 @@ function resolveReconTranId(bankTxn: ParsedBankTransaction): string {
   return String(bankTxn.tranId ?? bankTxn.extRefNbr);
 }
 
-async function fetchPendingTranIdsForOrg(
+async function fetchTranIdsBlockingRerunForOrg(
   organizationId: string
 ): Promise<Set<string>> {
   "use step";
   const { data, error } =
-    await finopsDb.listPendingReconDecisionTranIds(organizationId);
+    await finopsDb.listReconDecisionTranIdsBlockingRerun(organizationId);
 
   if (error) {
     throw new Error(
-      `Failed to list pending recon decisions: ${error instanceof Error ? error.message : String(error)}`
+      `Failed to list recon decisions blocking rerun: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 
@@ -670,17 +670,17 @@ async function insertReconDecision(
     suggestedAction: decision.suggested_action,
   });
 
-  const existing = await finopsDb.findPendingReconDecisionByTranId(
+  const existing = await finopsDb.findReconDecisionByTranIdBlockingRerun(
     organizationId,
     tranId
   );
   if (existing.error) {
     throw new Error(
-      `Failed to check pending recon decision: ${existing.error instanceof Error ? existing.error.message : String(existing.error)}`
+      `Failed to check existing recon decision: ${existing.error instanceof Error ? existing.error.message : String(existing.error)}`
     );
   }
   if (existing.data?.id) {
-    wf.log(WORKFLOW_NAME, "Pending recon decision already exists", {
+    wf.log(WORKFLOW_NAME, "Recon decision already exists for tran_id", {
       tranId: bankTxn.tranId,
       decisionId: existing.data.id,
       durationMs: Date.now() - startTime,
@@ -888,9 +888,9 @@ export async function runBankReconciliation(
     true
   );
 
-  const pendingTranIdsByOrg = new Map<string, Set<string>>();
+  const blockingTranIdsByOrg = new Map<string, Set<string>>();
   for (const orgId of txnsByOrg.keys()) {
-    pendingTranIdsByOrg.set(orgId, await fetchPendingTranIdsForOrg(orgId));
+    blockingTranIdsByOrg.set(orgId, await fetchTranIdsBlockingRerunForOrg(orgId));
   }
 
   const transactionsToProcess = transactions.filter((txn) => {
@@ -899,15 +899,20 @@ export async function runBankReconciliation(
       return false;
     }
     const tranId = resolveReconTranId(txn);
-    return !pendingTranIdsByOrg.get(txnOrgId)?.has(tranId);
+    return !blockingTranIdsByOrg.get(txnOrgId)?.has(tranId);
   });
 
-  const skippedPendingCount = transactions.length - transactionsToProcess.length;
-  if (skippedPendingCount > 0) {
-    wf.log(WORKFLOW_NAME, "Skipping transactions with pending recon decisions", {
-      skippedPendingCount,
-      transactionCount: transactions.length,
-    });
+  const skippedExistingDecisionCount =
+    transactions.length - transactionsToProcess.length;
+  if (skippedExistingDecisionCount > 0) {
+    wf.log(
+      WORKFLOW_NAME,
+      "Skipping transactions with existing recon decisions",
+      {
+        skippedExistingDecisionCount,
+        transactionCount: transactions.length,
+      }
+    );
   }
 
   // Process each transaction

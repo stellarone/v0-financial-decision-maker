@@ -3,7 +3,7 @@ import {
   type PostgrestError,
   type SupabaseClient,
 } from "@supabase/supabase-js";
-import { RECON_DECISION_STATUS } from "@/data/constants/bank-reconciliation";
+import { RECON_DECISION_STATUSES_BLOCKING_RERUN } from "@/data/constants/bank-reconciliation";
 
 type FinopsSchemaClient = { from: (table: string) => ReturnType<SupabaseClient["from"]> };
 
@@ -72,7 +72,7 @@ class FinopsDbService {
     return { data, error: null };
   }
 
-  async findPendingReconDecisionByTranId(
+  async findReconDecisionByTranIdBlockingRerun(
     organizationId: string,
     tranId: string
   ) {
@@ -81,14 +81,14 @@ class FinopsDbService {
       .select("id")
       .eq("organization_id", organizationId)
       .eq("tran_id", tranId)
-      .eq("status", RECON_DECISION_STATUS.PENDING)
+      .in("status", [...RECON_DECISION_STATUSES_BLOCKING_RERUN])
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
     if (error) {
       console.error(
-        "[FinopsDbService] findPendingReconDecisionByTranId error:",
+        "[FinopsDbService] findReconDecisionByTranIdBlockingRerun error:",
         error
       );
       return { data: null, error };
@@ -96,16 +96,16 @@ class FinopsDbService {
     return { data, error: null };
   }
 
-  async listPendingReconDecisionTranIds(organizationId: string) {
+  async listReconDecisionTranIdsBlockingRerun(organizationId: string) {
     const { data, error } = await this.getFinopsClient()
       .from("recon_decisions")
       .select("tran_id")
       .eq("organization_id", organizationId)
-      .eq("status", RECON_DECISION_STATUS.PENDING);
+      .in("status", [...RECON_DECISION_STATUSES_BLOCKING_RERUN]);
 
     if (error) {
       console.error(
-        "[FinopsDbService] listPendingReconDecisionTranIds error:",
+        "[FinopsDbService] listReconDecisionTranIdsBlockingRerun error:",
         error
       );
       return { data: null, error };

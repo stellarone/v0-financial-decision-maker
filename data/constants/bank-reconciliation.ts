@@ -69,6 +69,12 @@ export const RECON_DECISION_STATUS = {
   FAILED: "failed",
 } as const;
 
+/** Recon decisions in these statuses must not be re-run by the bank recon workflow. */
+export const RECON_DECISION_STATUSES_BLOCKING_RERUN = [
+  RECON_DECISION_STATUS.PENDING,
+  RECON_DECISION_STATUS.COMPLETED,
+] as const;
+
 /**
  * Candidate source types
  */
