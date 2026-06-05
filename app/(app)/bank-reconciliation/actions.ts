@@ -68,6 +68,12 @@ export const matchDecision = withActionAuth(
       throw new Error("Decision does not have a matched candidate to reconcile with")
     }
 
+    if (!matchedRefNbr) {
+      throw new Error(
+        "Decision does not have a matched document reference number; cannot match bank transaction in Acumatica"
+      )
+    }
+
     const { module, matchType, businessAccount } = resolveMatchModuleFields(
       matchedSourceType,
       {
@@ -84,7 +90,7 @@ export const matchDecision = withActionAuth(
           Matched: { value: true },
           Module: { value: module },
           MatchType: { value: matchType },
-          InvoiceNbr: { value: matchedRefNbr || "" },
+          InvoiceNbr: { value: matchedRefNbr },
           BusinessAccount: { value: businessAccount },
         },
       ],
@@ -103,7 +109,7 @@ export const matchDecision = withActionAuth(
       matchPayload,
       decisionUpdates: {
         final_doc_type: matchedSourceType || undefined,
-        final_ref_nbr: matchedRefNbr || undefined,
+        final_ref_nbr: matchedRefNbr,
         reviewed_by: ctx.profile.email || ctx.profile.id,
         reviewed_at: new Date().toISOString(),
       },
