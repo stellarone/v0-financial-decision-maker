@@ -636,6 +636,26 @@ Respond with ONLY valid JSON:
 // Insert & Update Steps
 // ============================================================================
 
+function resolveReconTranId(bankTxn: ParsedBankTransaction): string {
+  return String(bankTxn.tranId ?? bankTxn.extRefNbr);
+}
+
+async function fetchPendingTranIdsForOrg(
+  organizationId: string
+): Promise<Set<string>> {
+  "use step";
+  const { data, error } =
+    await finopsDb.listPendingReconDecisionTranIds(organizationId);
+
+  if (error) {
+    throw new Error(
+      `Failed to list pending recon decisions: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+
+  return new Set(data ?? []);
+}
+
 async function insertReconDecision(
   organizationId: string,
   decision: EnrichedAIDecision,
@@ -643,15 +663,34 @@ async function insertReconDecision(
 ): Promise<string> {
   "use step";
   const startTime = Date.now();
+  const tranId = resolveReconTranId(bankTxn);
   wf.log(WORKFLOW_NAME, "Inserting recon decision", {
     tranId: bankTxn.tranId,
     suggestedAction: decision.suggested_action,
   });
 
+  const existing = await finopsDb.findPendingReconDecisionByTranId(
+    organizationId,
+    tranId
+  );
+  if (existing.error) {
+    throw new Error(
+      `Failed to check pending recon decision: ${existing.error instanceof Error ? existing.error.message : String(existing.error)}`
+    );
+  }
+  if (existing.data?.id) {
+    wf.log(WORKFLOW_NAME, "Pending recon decision already exists", {
+      tranId: bankTxn.tranId,
+      decisionId: existing.data.id,
+      durationMs: Date.now() - startTime,
+    });
+    return existing.data.id;
+  }
+
   const payload = {
     organization_id: organizationId,
     source: "bank",
-    tran_id: String(bankTxn.tranId ?? bankTxn.extRefNbr),
+    tran_id: tranId,
     company_id: bankTxn.companyId || "Platinum",
     amount: Math.abs(Number(bankTxn.amount)),
     tran_date: bankTxn.tranDate,
@@ -842,6 +881,28 @@ export async function runBankReconciliation(
     true
   );
 
+  const pendingTranIdsByOrg = new Map<string, Set<string>>();
+  for (const orgId of txnsByOrg.keys()) {
+    pendingTranIdsByOrg.set(orgId, await fetchPendingTranIdsForOrg(orgId));
+  }
+
+  const transactionsToProcess = transactions.filter((txn) => {
+    const txnOrgId = txn.organizationId;
+    if (!txnOrgId) {
+      return false;
+    }
+    const tranId = resolveReconTranId(txn);
+    return !pendingTranIdsByOrg.get(txnOrgId)?.has(tranId);
+  });
+
+  const skippedPendingCount = transactions.length - transactionsToProcess.length;
+  if (skippedPendingCount > 0) {
+    wf.log(WORKFLOW_NAME, "Skipping transactions with pending recon decisions", {
+      skippedPendingCount,
+      transactionCount: transactions.length,
+    });
+  }
+
   // Process each transaction
   const results: BankReconciliationTransactionResult[] = [];
   let autoReconciledCount = 0;
@@ -850,7 +911,7 @@ export async function runBankReconciliation(
   let errorCount = 0;
 
   let processedIndex = 0;
-  for (const txn of transactions) {
+  for (const txn of transactionsToProcess) {
     const txnOrgId = txn.organizationId;
     // Skip transactions without organizationId (defensive check - should be filtered earlier)
     if (!txnOrgId) {
@@ -861,7 +922,7 @@ export async function runBankReconciliation(
     try {
       const decision = await runAIDecision(txn, candidates, executionId, {
         index: processedIndex,
-        total: transactions.length,
+        total: transactionsToProcess.length,
       });
 
       const decisionId = await insertReconDecision(txnOrgId, decision, txn);

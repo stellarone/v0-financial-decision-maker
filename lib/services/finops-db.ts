@@ -3,6 +3,7 @@ import {
   type PostgrestError,
   type SupabaseClient,
 } from "@supabase/supabase-js";
+import { RECON_DECISION_STATUS } from "@/data/constants/bank-reconciliation";
 
 type FinopsSchemaClient = { from: (table: string) => ReturnType<SupabaseClient["from"]> };
 
@@ -69,6 +70,52 @@ class FinopsDbService {
       return { data: null, error };
     }
     return { data, error: null };
+  }
+
+  async findPendingReconDecisionByTranId(
+    organizationId: string,
+    tranId: string
+  ) {
+    const { data, error } = await this.getFinopsClient()
+      .from("recon_decisions")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("tran_id", tranId)
+      .eq("status", RECON_DECISION_STATUS.PENDING)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error(
+        "[FinopsDbService] findPendingReconDecisionByTranId error:",
+        error
+      );
+      return { data: null, error };
+    }
+    return { data, error: null };
+  }
+
+  async listPendingReconDecisionTranIds(organizationId: string) {
+    const { data, error } = await this.getFinopsClient()
+      .from("recon_decisions")
+      .select("tran_id")
+      .eq("organization_id", organizationId)
+      .eq("status", RECON_DECISION_STATUS.PENDING);
+
+    if (error) {
+      console.error(
+        "[FinopsDbService] listPendingReconDecisionTranIds error:",
+        error
+      );
+      return { data: null, error };
+    }
+
+    const tranIds = (data ?? [])
+      .map((row) => row.tran_id as string)
+      .filter((tranId): tranId is string => Boolean(tranId));
+
+    return { data: tranIds, error: null };
   }
 
   async updateReconDecision(
