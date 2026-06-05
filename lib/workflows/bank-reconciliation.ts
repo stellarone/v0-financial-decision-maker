@@ -698,7 +698,10 @@ async function insertReconDecision(
     description: bankTxn.description || "",
     ext_ref_nbr: bankTxn.extRefNbr || "",
     matched_doc_type: decision.matched_source_type || null,
-    matched_ref_nbr: decision.matched_reference_nbr || null,
+    matched_ref_nbr: resolveMatchedReferenceNbr({
+      matched_candidate: decision.matched_candidate,
+      matched_reference_nbr: decision.matched_reference_nbr,
+    }),
     matched_candidate_id: decision.matched_candidate_id || null,
     confidence: Math.round(decision.confidence_score * 100),
     suggested_action: decision.suggested_action,
@@ -956,7 +959,10 @@ export async function runBankReconciliation(
         suggestedAction: decision.suggested_action,
         confidence: decision.confidence_score,
         matchedDocType: decision.matched_source_type,
-        matchedRefNbr: decision.matched_reference_nbr,
+        matchedRefNbr: resolveMatchedReferenceNbr({
+          matched_candidate: decision.matched_candidate,
+          matched_reference_nbr: decision.matched_reference_nbr,
+        }),
         decisionId,
         success: true,
       });
