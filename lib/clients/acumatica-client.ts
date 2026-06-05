@@ -189,6 +189,15 @@ export class AcumaticaClient {
     });
   }
 
+  /** GET /api/v1/cash/unprocessed-bank-transactions — Bank-UnprocessedTransactions GI rows. */
+  getUnprocessedBankTransactions(
+    input: T.CashSummaryQuery
+  ): Promise<T.AcumaticaUnprocessedBankTransaction[]> {
+    return this.call("/cash/unprocessed-bank-transactions", {
+      query: { organizationId: input.organizationId },
+    });
+  }
+
   /** GET /api/v1/expense-accounts/lookup — search-as-you-type AP expense-account lookup. */
   lookupExpenseAccount(
     input: T.ExpenseAccountsLookupQuery
