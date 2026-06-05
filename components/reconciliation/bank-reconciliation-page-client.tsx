@@ -67,6 +67,7 @@ interface MultiSelectFilters {
 
 const ALL_STATUSES = [
   RECON_DECISION_STATUS.PENDING,
+  RECON_DECISION_STATUS.PROCESSING,
   RECON_DECISION_STATUS.COMPLETED,
   RECON_DECISION_STATUS.FAILED,
 ] as const
@@ -79,6 +80,7 @@ const ALL_ACTIONS = [
 
 const DEFAULT_STATUSES = new Set<string>([
   RECON_DECISION_STATUS.PENDING,
+  RECON_DECISION_STATUS.PROCESSING,
   RECON_DECISION_STATUS.FAILED,
 ])
 
@@ -124,6 +126,13 @@ function StatusBadge({ status }: { status: string }) {
   if (status === RECON_DECISION_STATUS.PENDING) {
     return (
       <span className="inline-flex rounded-full border border-adz-amber/30 bg-adz-amber-dim px-2 py-0.5 text-xs font-medium text-adz-amber">
+        {label}
+      </span>
+    )
+  }
+  if (status === RECON_DECISION_STATUS.PROCESSING) {
+    return (
+      <span className="inline-flex rounded-full border border-border bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground">
         {label}
       </span>
     )
@@ -236,7 +245,8 @@ function DecisionActions({
 
   const isActionable =
     decision.status !== RECON_DECISION_STATUS.COMPLETED &&
-    decision.status !== RECON_DECISION_STATUS.FAILED
+    decision.status !== RECON_DECISION_STATUS.FAILED &&
+    decision.status !== RECON_DECISION_STATUS.PROCESSING
 
   const showMatch =
     decision.suggested_action === SUGGESTED_ACTIONS.MANUAL_REVIEW && isActionable

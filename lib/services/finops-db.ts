@@ -3,7 +3,10 @@ import {
   type PostgrestError,
   type SupabaseClient,
 } from "@supabase/supabase-js";
-import { RECON_DECISION_STATUSES_BLOCKING_RERUN } from "@/data/constants/bank-reconciliation";
+import {
+  RECON_DECISION_STATUS,
+  RECON_DECISION_STATUSES_BLOCKING_RERUN,
+} from "@/data/constants/bank-reconciliation";
 
 type FinopsSchemaClient = { from: (table: string) => ReturnType<SupabaseClient["from"]> };
 
@@ -116,6 +119,65 @@ class FinopsDbService {
       .filter((tranId): tranId is string => Boolean(tranId));
 
     return { data: tranIds, error: null };
+  }
+
+  async claimReconDecisionIfPending(
+    id: string,
+    organizationId: string,
+    reviewedBy: string
+  ) {
+    const reviewedAt = new Date().toISOString();
+    const { data, error } = await this.getFinopsClient()
+      .from("recon_decisions")
+      .update({
+        status: RECON_DECISION_STATUS.PROCESSING,
+        reviewed_by: reviewedBy,
+        reviewed_at: reviewedAt,
+        updated_at: reviewedAt,
+      })
+      .eq("id", id)
+      .eq("organization_id", organizationId)
+      .eq("status", RECON_DECISION_STATUS.PENDING)
+      .select("*")
+      .maybeSingle();
+
+    if (error) {
+      console.error(
+        "[FinopsDbService] claimReconDecisionIfPending error:",
+        error
+      );
+      return { data: null, error };
+    }
+    return { data, error: null };
+  }
+
+  async releaseReconDecisionProcessingClaim(
+    id: string,
+    organizationId: string
+  ) {
+    const updatedAt = new Date().toISOString();
+    const { data, error } = await this.getFinopsClient()
+      .from("recon_decisions")
+      .update({
+        status: RECON_DECISION_STATUS.PENDING,
+        reviewed_by: null,
+        reviewed_at: null,
+        updated_at: updatedAt,
+      })
+      .eq("id", id)
+      .eq("organization_id", organizationId)
+      .eq("status", RECON_DECISION_STATUS.PROCESSING)
+      .select("*")
+      .maybeSingle();
+
+    if (error) {
+      console.error(
+        "[FinopsDbService] releaseReconDecisionProcessingClaim error:",
+        error
+      );
+      return { data: null, error };
+    }
+    return { data, error: null };
   }
 
   async updateReconDecision(

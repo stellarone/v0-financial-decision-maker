@@ -46,7 +46,9 @@ export function computeReconMetrics(
       (d) => d.status === RECON_DECISION_STATUS.COMPLETED
     ).length,
     pending: decisions.filter(
-      (d) => d.status === RECON_DECISION_STATUS.PENDING
+      (d) =>
+        d.status === RECON_DECISION_STATUS.PENDING ||
+        d.status === RECON_DECISION_STATUS.PROCESSING
     ).length,
     failed: decisions.filter(
       (d) => d.status === RECON_DECISION_STATUS.FAILED

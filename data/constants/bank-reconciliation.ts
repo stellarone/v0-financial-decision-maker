@@ -65,6 +65,7 @@ export const SUGGESTED_ACTIONS = {
  */
 export const RECON_DECISION_STATUS = {
   PENDING: "pending",
+  PROCESSING: "processing",
   COMPLETED: "completed",
   FAILED: "failed",
 } as const;
@@ -72,6 +73,7 @@ export const RECON_DECISION_STATUS = {
 /** Recon decisions in these statuses must not be re-run by the bank recon workflow. */
 export const RECON_DECISION_STATUSES_BLOCKING_RERUN = [
   RECON_DECISION_STATUS.PENDING,
+  RECON_DECISION_STATUS.PROCESSING,
   RECON_DECISION_STATUS.COMPLETED,
 ] as const;
 
@@ -116,6 +118,7 @@ export const SUGGESTED_ACTION_LABELS: Record<string, string> = {
  */
 export const RECON_DECISION_STATUS_LABELS: Record<string, string> = {
   [RECON_DECISION_STATUS.PENDING]: "Pending",
+  [RECON_DECISION_STATUS.PROCESSING]: "Processing",
   [RECON_DECISION_STATUS.COMPLETED]: "Completed",
   [RECON_DECISION_STATUS.FAILED]: "Failed",
 } as const;

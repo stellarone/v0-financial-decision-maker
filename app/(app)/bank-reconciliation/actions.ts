@@ -19,6 +19,10 @@ import {
   resolveMatchedReferenceNbr,
 } from "@/lib/bank-reconciliation/build-create-entry-payload"
 import { completeBankTransactionReconciliation } from "@/lib/bank-reconciliation/complete-bank-transaction-reconciliation"
+import {
+  claimReconDecisionForProcessing,
+  releaseReconDecisionProcessingClaim,
+} from "@/lib/bank-reconciliation/claim-recon-decision-for-processing"
 import { resolveMatchModuleFields } from "@/lib/bank-reconciliation/resolve-match-module-fields"
 import { createAcumaticaClient } from "@/lib/clients/acumatica"
 import { withActionAuth } from "@/lib/services/app/auth/with-action-auth"
@@ -167,92 +171,108 @@ export const createEntryDecision = withActionAuth(
 
     const client = createAcumaticaClient({ userJwt: session.access_token })
     const organizationId = ctx.organization.id!
+    const reviewedBy = ctx.profile.email || ctx.profile.id
+
+    await claimReconDecisionForProcessing({
+      decisionId,
+      organizationId,
+      reviewedBy,
+    })
 
     let docType: string
     let refNbr: string | undefined
 
-    if (drCr === "Disbursement") {
-      if (!vendor) {
+    try {
+      if (drCr === "Disbursement") {
+        if (!vendor) {
+          throw new Error(
+            "Cannot create an AP Bill without a vendor. Run reconciliation again or use Match when a vendor candidate is available."
+          )
+        }
+
+        const expenseAccounts = await client.getTenantExpenseAccounts({
+          organizationId,
+        })
+        const expenseAccount = expenseAccounts[0]?.accountNumber
+        if (!expenseAccount) {
+          throw new Error("No expense accounts found in Acumatica for this organization")
+        }
+
+        const result = await client.createEntity("Bill", {
+          organizationId,
+          payload: buildApBillPayload({
+            vendorId: vendor,
+            tranDate,
+            description,
+            amount,
+            expenseAccount,
+          }),
+        })
+        docType = "APBill"
+        refNbr = acumaticaReferenceNbr(result)
+      } else if (drCr === "Receipt") {
+        if (!customer) {
+          throw new Error(
+            "Cannot create an AR Invoice without a customer. Run reconciliation again or use Match when a customer candidate is available."
+          )
+        }
+
+        const result = await client.createEntity("Invoice", {
+          organizationId,
+          payload: buildArInvoicePayload({
+            customerId: customer,
+            tranDate,
+            description,
+            amount,
+          }),
+        })
+        docType = "ARInvoice"
+        refNbr = acumaticaReferenceNbr(result)
+      } else {
         throw new Error(
-          "Cannot create an AP Bill without a vendor. Run reconciliation again or use Match when a vendor candidate is available."
+          `Cannot create entry for bank transaction type "${drCr}"`
         )
       }
 
-      const expenseAccounts = await client.getTenantExpenseAccounts({
-        organizationId,
-      })
-      const expenseAccount = expenseAccounts[0]?.accountNumber
-      if (!expenseAccount) {
-        throw new Error("No expense accounts found in Acumatica for this organization")
-      }
-
-      const result = await client.createEntity("Bill", {
-        organizationId,
-        payload: buildApBillPayload({
-          vendorId: vendor,
-          tranDate,
-          description,
-          amount,
-          expenseAccount,
-        }),
-      })
-      docType = "APBill"
-      refNbr = acumaticaReferenceNbr(result)
-    } else if (drCr === "Receipt") {
-      if (!customer) {
+      if (!refNbr) {
         throw new Error(
-          "Cannot create an AR Invoice without a customer. Run reconciliation again or use Match when a customer candidate is available."
+          "Created document did not return a reference number; cannot match bank transaction in Acumatica"
         )
       }
 
-      const result = await client.createEntity("Invoice", {
-        organizationId,
-        payload: buildArInvoicePayload({
-          customerId: customer,
-          tranDate,
-          description,
-          amount,
-        }),
-      })
-      docType = "ARInvoice"
-      refNbr = acumaticaReferenceNbr(result)
-    }
-
-    if (!refNbr) {
-      throw new Error(
-        "Created document did not return a reference number; cannot match bank transaction in Acumatica"
+      const { module, matchType, businessAccount } = resolveMatchModuleFields(
+        docType,
+        { vendor, customer }
       )
+
+      await completeBankTransactionReconciliation({
+        decisionId,
+        organizationId,
+        client,
+        matchPayload: {
+          CashAccount: { value: (bankTransaction.cashAccount as string) || "1000" },
+          ExtRefNbr: { value: (bankTransaction.extRefNbr as string) || "" },
+          MatchDetails: [
+            {
+              Matched: { value: true },
+              Module: { value: module },
+              MatchType: { value: matchType },
+              InvoiceNbr: { value: refNbr },
+              BusinessAccount: { value: businessAccount },
+            },
+          ],
+        },
+        decisionUpdates: {
+          final_doc_type: docType,
+          final_ref_nbr: refNbr || undefined,
+          reviewed_by: reviewedBy,
+          reviewed_at: new Date().toISOString(),
+        },
+      })
+    } catch (error) {
+      await releaseReconDecisionProcessingClaim({ decisionId, organizationId })
+      throw error
     }
-
-    const { module, matchType, businessAccount } = resolveMatchModuleFields(
-      docType,
-      { vendor, customer }
-    )
-
-    await completeBankTransactionReconciliation({
-      decisionId,
-      organizationId,
-      client,
-      matchPayload: {
-        CashAccount: { value: (bankTransaction.cashAccount as string) || "1000" },
-        ExtRefNbr: { value: (bankTransaction.extRefNbr as string) || "" },
-        MatchDetails: [
-          {
-            Matched: { value: true },
-            Module: { value: module },
-            MatchType: { value: matchType },
-            InvoiceNbr: { value: refNbr },
-            BusinessAccount: { value: businessAccount },
-          },
-        ],
-      },
-      decisionUpdates: {
-        final_doc_type: docType,
-        final_ref_nbr: refNbr || undefined,
-        reviewed_by: ctx.profile.email || ctx.profile.id,
-        reviewed_at: new Date().toISOString(),
-      },
-    })
 
     revalidatePath("/bank-reconciliation")
     return { decisionId, docType, refNbr, status: "completed" }

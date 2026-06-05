@@ -6,10 +6,15 @@ import {
 } from "./bank-reconciliation.ts";
 
 describe("RECON_DECISION_STATUSES_BLOCKING_RERUN", () => {
-  it("includes pending and completed but not failed", () => {
+  it("includes pending, processing, and completed but not failed", () => {
     assert.ok(
       RECON_DECISION_STATUSES_BLOCKING_RERUN.includes(
         RECON_DECISION_STATUS.PENDING
+      )
+    );
+    assert.ok(
+      RECON_DECISION_STATUSES_BLOCKING_RERUN.includes(
+        RECON_DECISION_STATUS.PROCESSING
       )
     );
     assert.ok(
