@@ -1,9 +1,15 @@
 import { createHmac, timingSafeEqual } from "crypto";
 
+/** HMAC secret for run stream tokens (interactive UI). Not the cron Bearer token. */
 function getStreamSigningSecret(): string {
-  const secret = process.env.CRON_SECRET;
+  const secret =
+    process.env.WORKFLOW_STREAM_SECRET?.trim() ||
+    process.env.CRON_SECRET?.trim() ||
+    process.env.SUPABASE_JWT_SECRET?.trim();
   if (!secret) {
-    throw new Error("CRON_SECRET is required to authorize workflow streams");
+    throw new Error(
+      "A stream signing secret is required (WORKFLOW_STREAM_SECRET, CRON_SECRET, or SUPABASE_JWT_SECRET)"
+    );
   }
   return secret;
 }
