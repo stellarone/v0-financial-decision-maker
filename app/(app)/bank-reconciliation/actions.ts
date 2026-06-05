@@ -106,18 +106,32 @@ export const matchDecision = withActionAuth(
     }
 
     const client = createAcumaticaClient({ userJwt: session.access_token })
-    await completeBankTransactionReconciliation({
+    const organizationId = ctx.organization.id!
+    const reviewedBy = ctx.profile.email || ctx.profile.id
+
+    await claimReconDecisionForProcessing({
       decisionId,
-      organizationId: ctx.organization.id!,
-      client,
-      matchPayload,
-      decisionUpdates: {
-        final_doc_type: matchedSourceType || undefined,
-        final_ref_nbr: matchedRefNbr,
-        reviewed_by: ctx.profile.email || ctx.profile.id,
-        reviewed_at: new Date().toISOString(),
-      },
+      organizationId,
+      reviewedBy,
     })
+
+    try {
+      await completeBankTransactionReconciliation({
+        decisionId,
+        organizationId,
+        client,
+        matchPayload,
+        decisionUpdates: {
+          final_doc_type: matchedSourceType || undefined,
+          final_ref_nbr: matchedRefNbr,
+          reviewed_by: reviewedBy,
+          reviewed_at: new Date().toISOString(),
+        },
+      })
+    } catch (error) {
+      await releaseReconDecisionProcessingClaim({ decisionId, organizationId })
+      throw error
+    }
 
     revalidatePath("/bank-reconciliation")
     return { decisionId, status: "completed" }
