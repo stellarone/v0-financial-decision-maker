@@ -17,6 +17,7 @@ Add to your consumer's `.env.local`:
 ```env
 # Platform Acumatica Service
 PLATFORM_ACUMATICA_URL=https://acumatica.stellarone.ai
+PLATFORM_ACUMATICA_SERVICE_TOKEN=
 
 # Shared Supabase (same project as everything else on stellarone.ai)
 NEXT_PUBLIC_SUPABASE_URL=
@@ -53,7 +54,7 @@ import { AcumaticaClient } from "@/lib/clients/acumatica-client";
 
 const client = new AcumaticaClient({
   baseUrl: process.env.PLATFORM_ACUMATICA_URL!,
-  serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  serviceToken: process.env.PLATFORM_ACUMATICA_SERVICE_TOKEN!,
   sourceApp: "member-portal",
   userJwt: session?.access_token,
   requestId: crypto.randomUUID(),
@@ -85,7 +86,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const client = new AcumaticaClient({
     baseUrl: process.env.PLATFORM_ACUMATICA_URL!,
-    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    serviceToken: process.env.PLATFORM_ACUMATICA_SERVICE_TOKEN!,
     sourceApp: "member-portal",
     userJwt: (await user.getAccessToken()) ?? undefined,
   });
@@ -111,7 +112,7 @@ export async function GET(request: NextRequest) {
 
 ## Auth Profiles Cheat-Sheet
 
-- **Profile A (service-role only)** — most endpoints. Consumer sends `Authorization: Bearer <service-role>` + `x-stellar-app`. Pass a server-side-resolved service-role key; never leak to the browser.
+- **Profile A (platform-acumatica service-token only)** — most endpoints. Consumer sends `Authorization: Bearer <platform-acumatica-service-token>` + `x-stellar-app`. Pass a server-side-resolved service token; never leak it to the browser.
 - **Profile B (service-role + user JWT)** — credentials writes, maintenance-mode, migration-mode. Pass the authenticated user's JWT in `opts.userJwt`. The service audits Profile B calls with the JWT's `sub`.
 
 See `skills/app/platform-acumatica-api/SKILL.md` for the full endpoint catalog with per-endpoint profile markers.

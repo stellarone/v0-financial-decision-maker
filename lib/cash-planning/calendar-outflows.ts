@@ -45,7 +45,7 @@ interface AcumaticaVendorRow {
   VendorName?: { value: string }
 }
 
-function readRequiredEnv(name: "SUPABASE_SERVICE_ROLE_KEY" | "ACUMATICA_ORGANIZATION_ID") {
+function readRequiredEnv(name: "PLATFORM_ACUMATICA_SERVICE_TOKEN") {
   const value = process.env[name]
   if (!value) {
     console.warn(`${LOG_PREFIX} Missing ${name}; skipping AP bills`)
@@ -268,13 +268,14 @@ function mapBillToCalendarOutflow(
   }
 }
 
-export async function loadCalendarOutflowsFromAPBills(): Promise<CalendarOutflowSeed[]> {
+export async function loadCalendarOutflowsFromAPBills(
+  organizationId: string
+): Promise<CalendarOutflowSeed[]> {
   const startedAt = Date.now()
-  const serviceRoleKey = readRequiredEnv("SUPABASE_SERVICE_ROLE_KEY")
-  const organizationId = readRequiredEnv("ACUMATICA_ORGANIZATION_ID")
+  const serviceToken = readRequiredEnv("PLATFORM_ACUMATICA_SERVICE_TOKEN")
   const baseUrl = readOptionalEnv("PLATFORM_ACUMATICA_URL")
 
-  if (!serviceRoleKey || !organizationId) {
+  if (!serviceToken) {
     return []
   }
 
@@ -286,7 +287,7 @@ export async function loadCalendarOutflowsFromAPBills(): Promise<CalendarOutflow
 
   const client = new AcumaticaClient({
     baseUrl,
-    serviceRoleKey,
+    serviceToken,
     sourceApp: SOURCE_APP,
     requestId: crypto.randomUUID(),
   })

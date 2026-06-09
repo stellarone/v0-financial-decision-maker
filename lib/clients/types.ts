@@ -108,6 +108,45 @@ export interface AcumaticaTrialBalance {
   FinancialPeriod?: AcumaticaValue<string>;
 }
 
+export interface AcumaticaCashSummary {
+  Account?: AcumaticaValue<string> | string;
+  AccountCD?: AcumaticaValue<string> | string;
+  AccountID?: AcumaticaValue<string | number> | string | number;
+  Description?: AcumaticaValue<string> | string;
+  FinancialPeriod?: AcumaticaValue<string> | string;
+  FinancialPeriodID?: AcumaticaValue<string> | string;
+  PTDBalance?: AcumaticaValue<number | string> | number | string;
+  CurrentBalance?: AcumaticaValue<number | string> | number | string;
+  Balance?: AcumaticaValue<number | string> | number | string;
+  CashBalance?: AcumaticaValue<number | string> | number | string;
+  CuryBalance?: AcumaticaValue<number | string> | number | string;
+  AvailableBalance?: AcumaticaValue<number | string> | number | string;
+  [field: string]: unknown;
+}
+
+export interface AcumaticaUnprocessedBankTransaction {
+  ID?: AcumaticaValue<number | string> | number | string;
+  TranDate?: AcumaticaValue<string> | string;
+  TranDesc?: AcumaticaValue<string> | string;
+  CuryTranAmt?: AcumaticaValue<number | string> | number | string;
+  DrCr?: AcumaticaValue<string> | string;
+  EntryTypeID?: AcumaticaValue<string> | string;
+  ExtRefNbr?: AcumaticaValue<string> | string;
+  Processed?: AcumaticaValue<boolean | string> | boolean | string;
+  CashAccount?: AcumaticaValue<string> | string;
+  OrganizationID?: AcumaticaValue<string> | string;
+  AccountID?: AcumaticaValue<string> | string;
+  Matched?: AcumaticaValue<boolean | string> | boolean | string;
+  Hidden?: AcumaticaValue<boolean | string> | boolean | string;
+  Amount?: AcumaticaValue<number | string> | number | string;
+  Date?: AcumaticaValue<string> | string;
+  Description?: AcumaticaValue<string> | string;
+  ExternalRef?: AcumaticaValue<string> | string;
+  id?: AcumaticaValue<number | string> | number | string;
+  TranID?: AcumaticaValue<number | string> | number | string;
+  [field: string]: unknown;
+}
+
 export interface AcumaticaARInvoice {
   Type?: AcumaticaValue<string>;
   ReferenceNbr?: AcumaticaValue<string>;
@@ -178,6 +217,10 @@ export interface AccountsQuery {
 }
 
 export interface TrialBalanceQuery {
+  organizationId: string;
+}
+
+export interface CashSummaryQuery {
   organizationId: string;
 }
 

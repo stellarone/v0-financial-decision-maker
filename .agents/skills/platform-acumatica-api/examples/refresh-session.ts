@@ -14,7 +14,7 @@ import { AcumaticaError } from "../client/errors";
 async function main() {
   const client = new AcumaticaClient({
     baseUrl: process.env.PLATFORM_ACUMATICA_URL!,
-    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    serviceToken: process.env.PLATFORM_ACUMATICA_SERVICE_TOKEN!,
     sourceApp: "platform-etl",
     requestId: `batch-${crypto.randomUUID()}`,
   });

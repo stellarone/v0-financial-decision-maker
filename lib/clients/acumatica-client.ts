@@ -18,8 +18,8 @@ import type * as T from "./types";
 export interface AcumaticaClientOptions {
   /** Base URL of the platform-acumatica service, e.g. `https://acumatica.stellarone.ai`. */
   baseUrl: string;
-  /** Supabase service-role key used for service-to-service auth. */
-  serviceRoleKey: string;
+  /** Dedicated platform-acumatica token used for service-to-service auth. */
+  serviceToken: string;
   /** Short identifier of the calling app (e.g. `member-portal`). Sent as `x-stellar-app`. */
   sourceApp: string;
   /** User JWT for audit; REQUIRED for Profile B endpoints (credentials writes, maintenance-mode, migration-mode). */
@@ -64,7 +64,7 @@ export class AcumaticaClient {
     }
 
     const headers: Record<string, string> = {
-      Authorization: `Bearer ${this.opts.serviceRoleKey}`,
+      Authorization: `Bearer ${this.opts.serviceToken}`,
       "x-stellar-app": this.opts.sourceApp,
     };
     if (this.opts.userJwt) headers["x-stellar-user-jwt"] = this.opts.userJwt;
@@ -178,6 +178,22 @@ export class AcumaticaClient {
     input: T.TrialBalanceQuery
   ): Promise<T.AcumaticaTrialBalance[]> {
     return this.call("/accounts/trial-balance", {
+      query: { organizationId: input.organizationId },
+    });
+  }
+
+  /** GET /api/v1/cash/summary — CA-CashSummary Generic Inquiry rows. */
+  getCashSummary(input: T.CashSummaryQuery): Promise<T.AcumaticaCashSummary[]> {
+    return this.call("/cash/summary", {
+      query: { organizationId: input.organizationId },
+    });
+  }
+
+  /** GET /api/v1/cash/unprocessed-bank-transactions — Bank-UnprocessedTransactions GI rows. */
+  getUnprocessedBankTransactions(
+    input: T.CashSummaryQuery
+  ): Promise<T.AcumaticaUnprocessedBankTransaction[]> {
+    return this.call("/cash/unprocessed-bank-transactions", {
       query: { organizationId: input.organizationId },
     });
   }

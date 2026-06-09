@@ -40,6 +40,7 @@ export interface AcumaticaCalendarOutflow {
 interface CashCalendarPageClientProps {
   acumaticaInflows: AcumaticaCalendarInflow[]
   acumaticaOutflows: AcumaticaCalendarOutflow[]
+  currentCashPosition: number | null
 }
 
 function toCalendarInflowItem(inflow: AcumaticaCalendarInflow): CalendarItem {
@@ -79,8 +80,10 @@ function toCalendarOutflowItem(outflow: AcumaticaCalendarOutflow): CalendarItem 
 export function CashCalendarPageClient({
   acumaticaInflows = [],
   acumaticaOutflows = [],
+  currentCashPosition = null,
 }: CashCalendarPageClientProps) {
   const [saveModalOpen, setSaveModalOpen] = useState(false)
+  const currentCashPositionValue = currentCashPosition ?? INITIAL_BALANCE
 
   const mappedInflows = useMemo(
     () => acumaticaInflows.map(toCalendarInflowItem),
@@ -142,7 +145,7 @@ export function CashCalendarPageClient({
           <SummaryCard
             icon={<Landmark className="h-4 w-4" />}
             label="Current Cash Position"
-            value={INITIAL_BALANCE}
+            value={currentCashPositionValue}
             accentColor="blue"
             trend={{ value: 12.4, direction: "up", label: "+12.4% vs last month" }}
           />
@@ -174,7 +177,7 @@ export function CashCalendarPageClient({
           <div className="flex-1 overflow-y-auto adz-scrollbar">
             <CashCalendar
               initialItems={mergedCalendarItems}
-              initialBalance={INITIAL_BALANCE}
+              initialBalance={currentCashPositionValue}
             />
           </div>
           <CalendarSidebar />

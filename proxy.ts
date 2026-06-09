@@ -62,37 +62,7 @@ export async function proxy(request: NextRequest) {
     cookieOptions: getSupabaseCookieOptions(),
   })
 
-  const { data: claimsData } = await supabase.auth.getClaims()
-
-  const pathname = request.nextUrl.pathname
-  const isPublicRoute = isPublicPath(pathname)
-  const isAuthenticated = Boolean(claimsData?.claims.sub)
-
-  if (!isAuthenticated && !isPublicRoute) {
-    const signInUrl = request.nextUrl.clone()
-    signInUrl.pathname = "/sign-in"
-    signInUrl.searchParams.set(
-      "redirectTo",
-      `${pathname}${request.nextUrl.search}`
-    )
-
-    const redirectResponse = NextResponse.redirect(signInUrl)
-    copyResponseState(supabaseResponse, redirectResponse)
-    return redirectResponse
-  }
-
-  if (isAuthenticated && AUTH_ROUTES.includes(pathname)) {
-    const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = resolveRedirectTarget(
-      request.nextUrl.searchParams.get("redirectTo")
-    )
-    redirectUrl.search = ""
-
-    const redirectResponse = NextResponse.redirect(redirectUrl)
-    copyResponseState(supabaseResponse, redirectResponse)
-    return redirectResponse
-  }
-
+  // Auth disabled
   return supabaseResponse
 }
 
