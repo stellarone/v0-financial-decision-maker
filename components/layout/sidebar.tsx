@@ -13,6 +13,7 @@ import {
   CreditCard,
   Box,
   AlertTriangle,
+  Landmark,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -57,6 +58,11 @@ const navSections: NavSection[] = [
         label: "Bank Reconciliation",
         href: "/bank-reconciliation",
         icon: Box,
+      },
+      {
+        label: "Settlement Reconciliation",
+        href: "/settlement-reconciliation",
+        icon: Landmark,
       },
       { label: "Anomalies", href: "#", icon: AlertTriangle },
     ],
