@@ -186,7 +186,7 @@ export async function loadCurrentCashPositionFromCashSummary(
     const latestPeriodRows = latestPeriod
       ? rows.filter((row) => getCashSummaryPeriod(row) === latestPeriod)
       : []
-    const rowsToMap = latestPeriod ? latestPeriodRows : []
+    const rowsToMap = latestPeriod ? latestPeriodRows : rows
     const fieldCounts: Record<string, number> = {}
     const skippedSamples: Array<{ index: number; keys: string[] }> = []
     const mappedSamples: Array<{
