@@ -657,11 +657,16 @@ async function fetchTranIdsBlockingRerunForOrg(
   return new Set(data ?? []);
 }
 
+type InsertReconDecisionResult = {
+  decisionId: string;
+  inserted: boolean;
+};
+
 async function insertReconDecision(
   organizationId: string,
   decision: EnrichedAIDecision,
   bankTxn: ParsedBankTransaction
-): Promise<string> {
+): Promise<InsertReconDecisionResult> {
   "use step";
   const startTime = Date.now();
   const tranId = resolveReconTranId(bankTxn);
@@ -685,7 +690,7 @@ async function insertReconDecision(
       decisionId: existing.data.id,
       durationMs: Date.now() - startTime,
     });
-    return existing.data.id;
+    return { decisionId: existing.data.id, inserted: false };
   }
 
   const payload = {
@@ -733,7 +738,7 @@ async function insertReconDecision(
     durationMs,
   });
 
-  return (data as { id: string }).id;
+  return { decisionId: (data as { id: string }).id, inserted: true };
 }
 
 async function completeAutoReconcile(
@@ -940,9 +945,16 @@ export async function runBankReconciliation(
         total: transactionsToProcess.length,
       });
 
-      const decisionId = await insertReconDecision(txnOrgId, decision, txn);
+      const { decisionId, inserted } = await insertReconDecision(
+        txnOrgId,
+        decision,
+        txn
+      );
 
-      if (decision.suggested_action === SUGGESTED_ACTIONS.AUTO_RECONCILE) {
+      if (
+        inserted &&
+        decision.suggested_action === SUGGESTED_ACTIONS.AUTO_RECONCILE
+      ) {
         await completeAutoReconcile(txnOrgId, txn, decision, decisionId);
 
         autoReconciledCount++;

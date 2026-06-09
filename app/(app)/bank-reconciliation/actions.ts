@@ -23,6 +23,7 @@ import {
   claimReconDecisionForProcessing,
   releaseReconDecisionProcessingClaim,
 } from "@/lib/bank-reconciliation/claim-recon-decision-for-processing"
+import { updateReconDecisionWithRetry } from "@/lib/bank-reconciliation/update-recon-decision-with-retry"
 import { resolveMatchModuleFields } from "@/lib/bank-reconciliation/resolve-match-module-fields"
 import { createAcumaticaClient } from "@/lib/clients/acumatica"
 import { withActionAuth } from "@/lib/services/app/auth/with-action-auth"
@@ -193,11 +194,19 @@ export const createEntryDecision = withActionAuth(
       reviewedBy,
     })
 
-    let docType: string
+    const existingDocType = (row as { final_doc_type?: string | null })
+      .final_doc_type
+    const existingRefNbr = (row as { final_ref_nbr?: string | null })
+      .final_ref_nbr
+
+    let docType: string | undefined
     let refNbr: string | undefined
 
     try {
-      if (drCr === "Disbursement") {
+      if (existingRefNbr && existingDocType) {
+        docType = existingDocType
+        refNbr = existingRefNbr
+      } else if (drCr === "Disbursement") {
         if (!vendor) {
           throw new Error(
             "Cannot create an AP Bill without a vendor. Run reconciliation again or use Match when a vendor candidate is available."
@@ -284,12 +293,25 @@ export const createEntryDecision = withActionAuth(
         },
       })
     } catch (error) {
+      if (refNbr && docType) {
+        try {
+          await updateReconDecisionWithRetry(decisionId, {
+            final_doc_type: docType,
+            final_ref_nbr: refNbr,
+          })
+        } catch (persistError) {
+          console.error(
+            "[createEntryDecision] Failed to persist created document ref:",
+            persistError
+          )
+        }
+      }
       await releaseReconDecisionProcessingClaim({ decisionId, organizationId })
       throw error
     }
 
     revalidatePath("/bank-reconciliation")
-    return { decisionId, docType, refNbr, status: "completed" }
+    return { decisionId, docType: docType!, refNbr, status: "completed" }
   }
 )
 
