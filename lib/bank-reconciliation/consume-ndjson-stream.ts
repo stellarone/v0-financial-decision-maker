@@ -194,7 +194,11 @@ export async function consumeWorkflowNdjsonStream(
   onUpdate: (state: BankReconStreamState) => void,
   initial: BankReconStreamState = INITIAL_BANK_RECON_STREAM_STATE,
   options?: { allowPartial?: boolean }
-): Promise<{ state: BankReconStreamState; eventsApplied: number }> {
+): Promise<{
+  state: BankReconStreamState;
+  eventsApplied: number;
+  chunksRead: number;
+}> {
   let state: BankReconStreamState = {
     ...initial,
     phase: initial.phase === "idle" ? "running" : initial.phase,
@@ -220,7 +224,7 @@ export async function consumeWorkflowNdjsonStream(
         `Request failed (${response.status})`,
     };
     onUpdate(state);
-    return { state, eventsApplied: 0 };
+    return { state, eventsApplied: 0, chunksRead: 0 };
   }
 
   if (!response.body) {
@@ -230,7 +234,7 @@ export async function consumeWorkflowNdjsonStream(
       error: "No response stream received",
     };
     onUpdate(state);
-    return { state, eventsApplied: 0 };
+    return { state, eventsApplied: 0, chunksRead: 0 };
   }
 
   const reader = response.body.getReader();
@@ -238,11 +242,15 @@ export async function consumeWorkflowNdjsonStream(
   let buffer = "";
   let terminal = false;
   let eventsApplied = 0;
+  let chunksRead = 0;
 
   try {
     readLoop: while (!terminal) {
       const { done, value } = await reader.read();
       if (done) break;
+      if (value) {
+        chunksRead += 1;
+      }
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n");
@@ -286,7 +294,7 @@ export async function consumeWorkflowNdjsonStream(
     onUpdate(state);
   }
 
-  return { state, eventsApplied };
+  return { state, eventsApplied, chunksRead };
 }
 
 /**
@@ -348,7 +356,7 @@ export async function pollWorkflowRunStream(
         continue;
       }
 
-      const { state: nextState, eventsApplied } =
+      const { state: nextState, chunksRead } =
         await consumeWorkflowNdjsonStream(
           res,
           onUpdate,
@@ -357,8 +365,8 @@ export async function pollWorkflowRunStream(
         );
       state = nextState;
 
-      if (eventsApplied > 0) {
-        nextChunkIndex += eventsApplied;
+      if (chunksRead > 0) {
+        nextChunkIndex += chunksRead;
         idlePolls = 0;
       } else {
         idlePolls += 1;

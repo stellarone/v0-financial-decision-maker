@@ -72,7 +72,14 @@ export async function GET(request: Request) {
       );
     }
 
-    return new Response(readable, { headers: STREAM_HEADERS });
+    const tailIndex = await readable.getTailIndex();
+
+    return new Response(readable, {
+      headers: {
+        ...STREAM_HEADERS,
+        "x-workflow-stream-tail-index": String(tailIndex),
+      },
+    });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to read workflow stream";

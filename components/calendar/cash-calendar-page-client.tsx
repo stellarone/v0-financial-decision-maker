@@ -17,8 +17,6 @@ import { SavePlanModal } from "@/components/calendar/save-plan-modal"
 import { mockCalendarItems } from "@/lib/mock-data/calendar-items"
 import type { CalendarItem } from "@/lib/types"
 
-const INITIAL_BALANCE = 847234
-
 export interface AcumaticaCalendarInflow {
   id: string
   dateISO: string
@@ -83,7 +81,7 @@ export function CashCalendarPageClient({
   currentCashPosition = null,
 }: CashCalendarPageClientProps) {
   const [saveModalOpen, setSaveModalOpen] = useState(false)
-  const currentCashPositionValue = currentCashPosition ?? INITIAL_BALANCE
+  const cashPositionUnavailable = currentCashPosition === null
 
   const mappedInflows = useMemo(
     () => acumaticaInflows.map(toCalendarInflowItem),
@@ -145,9 +143,18 @@ export function CashCalendarPageClient({
           <SummaryCard
             icon={<Landmark className="h-4 w-4" />}
             label="Current Cash Position"
-            value={currentCashPositionValue}
+            value={currentCashPosition}
             accentColor="blue"
-            trend={{ value: 12.4, direction: "up", label: "+12.4% vs last month" }}
+            trend={
+              cashPositionUnavailable
+                ? undefined
+                : { value: 12.4, direction: "up", label: "+12.4% vs last month" }
+            }
+            meta={
+              cashPositionUnavailable
+                ? "Unable to load from Acumatica"
+                : undefined
+            }
           />
           <SummaryCard
             icon={<ArrowDownLeft className="h-4 w-4" />}
@@ -177,7 +184,7 @@ export function CashCalendarPageClient({
           <div className="flex-1 overflow-y-auto adz-scrollbar">
             <CashCalendar
               initialItems={mergedCalendarItems}
-              initialBalance={currentCashPositionValue}
+              initialBalance={currentCashPosition ?? 0}
             />
           </div>
           <CalendarSidebar />

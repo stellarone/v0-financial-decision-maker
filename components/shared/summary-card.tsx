@@ -50,7 +50,7 @@ const accentMap = {
 interface SummaryCardProps {
   icon: React.ReactNode
   label: string
-  value: number
+  value: number | null
   format?: "currency" | "number" | "percent"
   accentColor: keyof typeof accentMap
   trend?: {
@@ -61,7 +61,10 @@ interface SummaryCardProps {
   meta?: string
 }
 
-function formatValue(value: number, format: string) {
+function formatValue(value: number | null, format: string) {
+  if (value === null) {
+    return "—"
+  }
   if (format === "currency") {
     if (Math.abs(value) >= 1_000_000) {
       return `$${(value / 1_000_000).toFixed(1)}M`

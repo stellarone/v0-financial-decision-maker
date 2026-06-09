@@ -16,6 +16,7 @@ const BALANCE_FIELD_CANDIDATES = [
   "AvailableBalance",
 ] as const
 const PERIOD_FIELD_CANDIDATES = ["FinancialPeriodID", "FinancialPeriod"] as const
+const ACCOUNT_FIELD_CANDIDATES = ["AccountCD", "Account", "AccountID"] as const
 
 function readRequiredEnv(name: "PLATFORM_ACUMATICA_SERVICE_TOKEN") {
   const value = process.env[name]
@@ -68,6 +69,7 @@ function getFieldValue(
   fieldName:
     | (typeof BALANCE_FIELD_CANDIDATES)[number]
     | (typeof PERIOD_FIELD_CANDIDATES)[number]
+    | (typeof ACCOUNT_FIELD_CANDIDATES)[number]
 ) {
   if (fieldName in row) return row[fieldName]
 
@@ -123,6 +125,31 @@ function comparePeriods(left: string, right: string) {
   }
 
   return left.localeCompare(right)
+}
+
+function getCashSummaryAccountKey(row: AcumaticaCashSummary) {
+  for (const fieldName of ACCOUNT_FIELD_CANDIDATES) {
+    const account = parsePeriodValue(getFieldValue(row, fieldName))
+    if (account) return account
+  }
+
+  return null
+}
+
+function dedupeCashSummaryRowsByAccount(rows: AcumaticaCashSummary[]) {
+  const deduped = new Map<string, AcumaticaCashSummary>()
+  const withoutAccountKey: AcumaticaCashSummary[] = []
+
+  rows.forEach((row) => {
+    const accountKey = getCashSummaryAccountKey(row)
+    if (accountKey) {
+      deduped.set(accountKey, row)
+      return
+    }
+    withoutAccountKey.push(row)
+  })
+
+  return [...deduped.values(), ...withoutAccountKey]
 }
 
 function getLatestCashSummaryPeriod(rows: AcumaticaCashSummary[]) {
@@ -186,7 +213,11 @@ export async function loadCurrentCashPositionFromCashSummary(
     const latestPeriodRows = latestPeriod
       ? rows.filter((row) => getCashSummaryPeriod(row) === latestPeriod)
       : []
-    const rowsToMap = latestPeriod ? latestPeriodRows : rows
+    const rowsToMap = latestPeriod
+      ? latestPeriodRows
+      : rows.length <= 1
+        ? rows
+        : dedupeCashSummaryRowsByAccount(rows)
     const fieldCounts: Record<string, number> = {}
     const skippedSamples: Array<{ index: number; keys: string[] }> = []
     const mappedSamples: Array<{
