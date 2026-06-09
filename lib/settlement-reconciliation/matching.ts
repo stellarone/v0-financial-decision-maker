@@ -129,8 +129,7 @@ export function matchSettlement(
 export function computeReconciliationSummary(
   matches: MatchResult[],
   payoutNetControlTotal: number,
-  resolutions: Record<string, ExceptionResolution>,
-  manualPaymentAmounts: Record<string, number> = {}
+  resolutions: Record<string, ExceptionResolution>
 ): ReconciliationSummary {
   const acceptedMatches = matches.filter(
     (match) =>
