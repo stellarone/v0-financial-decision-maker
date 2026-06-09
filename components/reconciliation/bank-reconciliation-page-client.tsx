@@ -575,11 +575,26 @@ export function BankReconciliationPageClient({
         signal: pollAbort.signal,
       })
 
+      if (streamPollAbortRef.current !== pollAbort) {
+        return
+      }
+
       if (final.phase === "success") {
         router.refresh()
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
+        if (streamPollAbortRef.current !== pollAbort) {
+          return
+        }
+        setStreamState((prev) =>
+          prev.phase === "running"
+            ? INITIAL_BANK_RECON_STREAM_STATE
+            : prev
+        )
+        return
+      }
+      if (streamPollAbortRef.current !== pollAbort) {
         return
       }
       setStreamState({
@@ -589,9 +604,9 @@ export function BankReconciliationPageClient({
         currentMessage: "Failed to run reconciliation",
       })
     } finally {
-      setIsRunning(false)
       if (streamPollAbortRef.current === pollAbort) {
         streamPollAbortRef.current = null
+        setIsRunning(false)
       }
     }
   }, [organizationId, router, decisions])
