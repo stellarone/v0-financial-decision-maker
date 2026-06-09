@@ -157,7 +157,6 @@ export function computeReconciliationSummary(
       if (resolution.type === "ignore") return sum
 
       if (resolution.type === "match_manually" && resolution.manualPaymentId) {
-        void manualPaymentAmounts
         return sum + match.line.net
       }
 

@@ -531,14 +531,6 @@ export function SettlementReconciliationPageClient() {
 
   const grouped = useMemo(() => groupMatchesBySection(matches), [matches])
 
-  const manualPaymentAmounts = useMemo(() => {
-    const map: Record<string, number> = {}
-    for (const payment of clearingPayments) {
-      map[payment.id] = payment.amount
-    }
-    return map
-  }, [clearingPayments])
-
   const reconciliationSummary = useMemo(() => {
     if (!batch) {
       return {
@@ -554,10 +546,9 @@ export function SettlementReconciliationPageClient() {
     return computeReconciliationSummary(
       matches,
       batch.summary.payoutNetTotal,
-      resolutions,
-      manualPaymentAmounts
+      resolutions
     )
-  }, [batch, matches, resolutions, manualPaymentAmounts])
+  }, [batch, matches, resolutions])
 
   const canRelease =
     batch !== null &&
